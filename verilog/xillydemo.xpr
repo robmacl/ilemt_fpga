@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="39" Path="C:/Users/robma/Documents/Work/microzed/verilog/vivado/xillydemo.xpr">
+<Project Version="7" Minor="39" Path="C:/Users/robma/Documents/Work/ilemt_fpga/verilog/xillydemo.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="df4df4eb38e8499690140eac2ff3d5e9"/>
@@ -22,14 +22,14 @@
     <Option Name="ActiveSimSet" Val="sim_2"/>
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
     <Option Name="ProjectType" Val="Default"/>
-    <Option Name="IPRepoPath" Val="$PPRDIR/../../vivado-essentials/vivado-ip"/>
-    <Option Name="IPOutputRepo" Val="$PCACHEDIR/ip"/>
+    <Option Name="IPRepoPath" Val="$PPRDIR/../../microzed/vivado-essentials/vivado-ip"/>
+    <Option Name="IPOutputRepo" Val="C:/Users/robma/Documents/Work/microzed/verilog/vivado/xillydemo.cache/ip"/>
     <Option Name="IPCachePermission" Val="read"/>
     <Option Name="IPCachePermission" Val="write"/>
     <Option Name="EnableCoreContainer" Val="FALSE"/>
     <Option Name="CreateRefXciForCoreContainers" Val="FALSE"/>
-    <Option Name="IPUserFilesDir" Val="$PIPUSERFILESDIR"/>
-    <Option Name="IPStaticSourceDir" Val="$PIPUSERFILESDIR/ipstatic"/>
+    <Option Name="IPUserFilesDir" Val="$PPRDIR/../../microzed/verilog/vivado/xillydemo.ip_user_files"/>
+    <Option Name="IPStaticSourceDir" Val="$PPRDIR/../../microzed/verilog/vivado/xillydemo.ip_user_files/ipstatic"/>
     <Option Name="EnableBDX" Val="FALSE"/>
     <Option Name="DSAVendor" Val="xilinx"/>
     <Option Name="DSANumComputeUnits" Val="60"/>
@@ -61,56 +61,56 @@
   <FileSets Version="1" Minor="31">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../src/xillydemo.v">
+      <File Path="$PPRDIR/xillydemo.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../src/xillybus.v">
+      <File Path="$PPRDIR/xillybus.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../src/xillybus_core.v">
+      <File Path="$PPRDIR/xillybus_core.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../vivado-essentials/system.v">
+      <File Path="$PPRDIR/../../microzed/vivado-essentials/system.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../vivado-essentials/vivado_system/vivado_system.bd">
+      <File Path="$PPRDIR/../../microzed/vivado-essentials/vivado_system/vivado_system.bd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/ip/async_fifo_32/async_fifo_32.xci">
+      <File Path="$PPRDIR/../../microzed/verilog/vivado/xillydemo.srcs/sources_1/ip/async_fifo_32/async_fifo_32.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../src/adc_interface.v">
+      <File Path="$PPRDIR/adc_interface.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../src/dac_interface.v">
+      <File Path="$PPRDIR/dac_interface.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -125,14 +125,14 @@
     </FileSet>
     <FileSet Name="constrs_1" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1">
       <Filter Type="Constrs"/>
-      <File Path="$PPRDIR/../../vivado-essentials/xillydemo.xdc">
+      <File Path="$PPRDIR/xillydemo.xdc">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
         </FileInfo>
       </File>
       <Config>
-        <Option Name="TargetConstrsFile" Val="$PPRDIR/../../vivado-essentials/xillydemo.xdc"/>
+        <Option Name="TargetConstrsFile" Val="$PPRDIR/xillydemo.xdc"/>
         <Option Name="ConstrsType" Val="XDC"/>
       </Config>
     </FileSet>
@@ -145,7 +145,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../src/adc_interface.v">
+      <File Path="$PPRDIR/adc_interface.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -159,7 +159,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/adc_interface_tb_behav.wcfg">
+      <File Path="$PPRDIR/../../microzed/verilog/vivado/adc_interface_tb_behav.wcfg">
         <FileInfo>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
@@ -170,8 +170,8 @@
         <Option Name="TransportPathDelay" Val="0"/>
         <Option Name="TransportIntDelay" Val="0"/>
         <Option Name="SrcSet" Val=""/>
-        <Option Name="XSimWcfgFile" Val="$PPRDIR/adc_interface_tb_behav.wcfg"/>
-        <Option Name="XSimWcfgFile" Val="$PPRDIR/adc_interface_tb_behav.wcfg"/>
+        <Option Name="XSimWcfgFile" Val="$PPRDIR/../../microzed/verilog/vivado/adc_interface_tb_behav.wcfg"/>
+        <Option Name="XSimWcfgFile" Val="$PPRDIR/../../microzed/verilog/vivado/adc_interface_tb_behav.wcfg"/>
         <Option Name="xsim.simulate.runtime" Val="100 us"/>
         <Option Name="xsim.simulate.log_all_signals" Val="true"/>
         <Option Name="xsim.simulate.saif_scope" Val="UUT"/>
@@ -185,7 +185,7 @@
       </Config>
     </FileSet>
     <FileSet Name="fifo_8x2048" Type="BlockSrcs" RelSrcDir="$PSRCDIR/fifo_8x2048">
-      <File Path="$PPRDIR/../../vivado-essentials/fifo_8x2048/fifo_8x2048.xci">
+      <File Path="$PPRDIR/../../microzed/vivado-essentials/fifo_8x2048/fifo_8x2048.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -198,7 +198,7 @@
       </Config>
     </FileSet>
     <FileSet Name="capture_clk1" Type="BlockSrcs" RelSrcDir="$PSRCDIR/capture_clk1">
-      <File Path="$PSRCDIR/sources_1/ip/capture_clk1/capture_clk1.xci">
+      <File Path="$PPRDIR/../../microzed/verilog/vivado/xillydemo.srcs/sources_1/ip/capture_clk1/capture_clk1.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -219,7 +219,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../src/dac_interface.v">
+      <File Path="$PPRDIR/dac_interface.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -293,7 +293,7 @@
         <Step Id="place_design"/>
         <Step Id="post_place_power_opt_design"/>
         <Step Id="phys_opt_design"/>
-        <Step Id="route_design" PostStepTclHook="$PPRDIR/../../vivado-essentials/showstopper.tcl"/>
+        <Step Id="route_design" PostStepTclHook="$PPRDIR/../../microzed/vivado-essentials/showstopper.tcl"/>
         <Step Id="post_route_phys_opt_design"/>
         <Step Id="write_bitstream"/>
       </Strategy>
