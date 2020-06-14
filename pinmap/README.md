@@ -20,6 +20,7 @@ The 'Unit', 'Side', and 'Type' fields are directly copied into 'kipart_pinmap.cs
 
 The MicroZed PL IO names have been constructed (by Avnet) with the format:
 ><JX*n*>_<*Pairing*>_<*Line*>_{N,P}
+
 If *Pairing* is 'SE' then there is no trailing '_N' or '_P'.
 
 These fields should be understood as forming the full MicroZed_Name in `microzed_pinout.xlsx`.  
@@ -39,8 +40,10 @@ kipart is a python program for generating Kicad schematic symbols from CSV files
 
 If you have Python installed you can use:
 >pip install kipart
+
 to install and:
 >pip install --upgrade
+
 to update your installed version.
 
 I run kipart via the anaconda shell under windows.  cd to 'ilemt_hw\pinmap' before running kipart.
