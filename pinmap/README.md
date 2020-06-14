@@ -19,7 +19,7 @@ This file defines the mapping for the re-mappable PL IO pins.  This overrides th
 The 'Unit', 'Side', and 'Type' fields are directly copied into 'kipart_pinmap.csv', and define which Kicad unit (eg. gate equivalent) the pins belong to, which side of the box symbol the pin goes on, and the Kicad electrical type.  For single-ended signals the 'Name' is also directly copied into 'kipart_pinmap.csv'.  If the signal is differential then two pins are generated, with names '+' and '-' suffix, see 'Sense' below.  
 
 The MicroZed PL IO names have been constructed (by Avnet) with the format:
-    <JX*n*>_<*Pairing*>_<*Line*>_{N,P}
+><JX*n*>_<*Pairing*>_<*Line*>_{N,P}
 If *Pairing* is 'SE' then there is no trailing '_N' or '_P'.
 
 These fields should be understood as forming the full MicroZed_Name in `microzed_pinout.xlsx`.  
@@ -38,15 +38,15 @@ kipart is a python program for generating Kicad schematic symbols from CSV files
 
 
 If you have Python installed you can use:
-    pip install kipart
+>pip install kipart
 to install and:
-    pip install --upgrade
+>pip install --upgrade
 to update your installed version.
 
 I run kipart via the anaconda shell under windows.  cd to 'ilemt_hw\pinmap' before running kipart.
 
 Kicad is not entirely happy with symbols being redefined after they have been placed on the Schematic.  Exit Kicad before generating a new symbol library:
-    kipart -b -w kipart_microzed.csv
+>kipart -b -w kipart_microzed.csv
 
 '-b' means create a single pin for a bundle pins with the same name (usually power).  '-w' allows overwriting.
 
