@@ -13,19 +13,20 @@ gen_mapping.m is a Matlab script that processes input files:
 to generate output files:
 * `kipart_microzed.csv`: the input to kipart, see below.
 * `kipart_microzed_annotated.csv`: same as `kipart_microzed.csv` except that it has additional documentation columns copied from `microzed_pinout.xlsx`, and lacks the kipart header line (which violates csv convention).
-* <vivado constraints file TBD>
+* vivado constraints file TBD
 
 
 ## microzed_pinout.xlsx:
 Mostly fixed information about every pin on the MicroZed.  This is in particular used to keep track of the relation between the MicroZen pin and the Zynq pinout pad code.  For dedicated pins such as power, initialization, etc., the Kicad symbol info (Unit, Side, Type) is also kept here.  Since this represents *all* pins, there are always 200 lines representing every pin number.  All the remappable PL IO pins are in the "unused" unit.
 
 ## microzed_mapping.csv:
-This file defines the mapping for the re-mappable PL IO pins.  This overrides the (Unit, Side, Type) info in microzed_pinout.xslx, and uses a format that avoids redundancies that could become inconsistent, and splits out the out the (JX, Type, Line) info that is encoded into the MicroZed_Name so that it can be easily modified as a spreadheet.
+This file defines the mapping for the re-mappable PL IO pins.  This overrides the (Unit, Side, Type) info in microzed_pinout.xslx, and uses a format that avoids redundancies that could become inconsistent, and splits out the out the (JX, Pairing, Line) info that is encoded into the MicroZed_Name so that it can be easily modified as a spreadheet.
 
 The 'Unit', 'Side', and 'Type' fields are directly copied into 'kipart_pinmap.csv', and define which Kicad unit (eg. gate equivalent) the pins belong to, which side of the box symbol the pin goes on, and the Kicad electrical type.  For single-ended signals the 'Name' is also directly copied into 'kipart_pinmap.csv'.  If the signal is differential then two pins are generated, with names '+' and '-' suffix, see 'Sense' below.  
 
 The MicroZed PL IO names have been constructed (by Avnet) with the format:
-    <JX*n*>_<*Pairing*>_<*Line*>_{N,P}
+><JX*n*>_<*Pairing*>_<*Line*>_{N,P}
+
 If *Pairing* is 'SE' then there is no trailing '_N' or '_P'.
 
 These fields should be understood as forming the full MicroZed_Name in `microzed_pinout.xlsx`.  
@@ -51,15 +52,17 @@ kipart is a python program for generating Kicad schematic symbols from CSV files
 
 
 If you have Python installed you can use:
-    pip install kipart
+>pip install kipart
+
 to install and:
-    pip install --upgrade
+>pip install --upgrade
+
 to update your installed version.
 
 I run kipart via the anaconda shell under windows.  cd to 'ilemt_hw\pinmap' before running kipart.
 
 Kicad is not entirely happy with symbols being redefined after they have been placed on the Schematic.  Exit Kicad before generating a new symbol library:
-    kipart -b -w kipart_microzed.csv
+>kipart -b -w kipart_microzed.csv
 
 '-b' means create a single pin for a bundle pins with the same name (usually power).  '-w' allows overwriting.
 
