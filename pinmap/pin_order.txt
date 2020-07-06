@@ -1,0 +1,123 @@
+Pin ordering for input slot, left to right (increasing number at
+Microzed).  This is and aid to defining the FPGA pin map, so only has
+the digital signal lines, not supplies or analog.
+
+Lines that are buffered or bussed low speed are included, but have *
+prefix.  These lines are not in the pinmap, since they don't run
+directly to the Microzen, but do still have to be broken out of the
+card connector in the correct order.
+
+The idea is to avoid any crossovers in the lines running to the
+Microzed.  I'm using a system which is in some sense unnecessarily
+strict, since we can do some crossovers during top/bottom flips that
+have to happen anyway, but I see no benefit in exploting this freedom,
+and there is likely some cost in degrading pair matching.
+ -- The + of diff pair must always be on the left at the Microzed, so
+    we fan out all pairs this way, even those that go to a buffer.
+ -- We map out the pins so that, on the te two row microzed connector,
+    the lower number (odd) pin or pin pair is used first.
+ -- Single-ended lines are broken out in direct order, eg. 17, 18.
+ -- Diff pairs are broken out pairwise, eg. 17, 19, 18, 20.
+
+Rules that come from placement:
+ -- Single-ended buffered outputs (SYNC, etc.) are mapped on the
+    left. 
+ -- The input slots are mapped in left-to-right (increasing) order. 
+ -- Clock outputs are on the right
+
+
+JX1 (output):
+Left edge:
+DOUT8+
+DOUT8-
+DOUT6+
+DOUT6-
+DOUT3+
+DOUT3-
+DOUT1+
+DOUT1-
+DFB4+
+DFB4-
+DFB2+
+DFB2-
+DOUTL6
+DOUTL4
+*SDA
+DOUTL2
+Right edge:
+DOUTL1
+*SCL
+DOUTL3
+DOUTL5
+DFB1+
+DFB1-
+DFB3+
+DFB3-
+*OUT_SYSCLK+
+*OUT_SYSCLK-
+DOUT2+
+DOUT2-
+DOUT4+
+DOUT4-
+DOUT5+
+DOUT5-
+DOUT7+
+DOUT7-
+
+
+JX2 (input):
+
+Single ended (on left)
+BIST_MOSI
+BIST_SCLK
+BIST_SYNC
+ICLK_SYNC
+ICLK_SDI
+IN0_CARDSEL
+IN1_CARDSEL
+IN2_CARDSEL
+IN3_CARDSEL
+
+
+INPUT units:
+Left edge:
+*SCKA+
+*SCKA-
+SDOA3+
+SDOA3-
+SDOB1+
+SDOB1-
+*SDA
+*SYNC
+Right edge:
+*CARDSEL
+*SCL
+*PROBE_CONFIG
+*SDI
+SDOA1+
+SDOA1-
+SDOA2+
+SDOA2-
+*SCKB+
+*SCKB-
+*MCLK+
+*MCLK-
+
+ICLK unit:
+FPGA_SYSCLK+
+FPGA_SYSCLK-
+MCLK_ENA+
+MCLK_ENA-
+SCKA+
+SCKA-
+SCKB+
+SCKB-
+
+
+
+
+
+
+
+
+
