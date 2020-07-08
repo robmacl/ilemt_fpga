@@ -30,7 +30,6 @@ A061,OUT,DOUT7+,right,out
 A063,OUT,DOUT7-,right,out
 A011,OUT,DOUT8+,right,out
 A013,OUT,DOUT8-,right,out
-B014,IN3,IN3_CARDSEL,right,out
 B068,IN3,IN3_SDOA1+,left,in
 B070,IN3,IN3_SDOA1-,left,in
 B067,IN3,IN3_SDOB1+,left,in
@@ -39,7 +38,6 @@ B073,IN3,IN3_SDOA2+,left,in
 B075,IN3,IN3_SDOA2-,left,in
 B062,IN3,IN3_SDOA3+,left,in
 B064,IN3,IN3_SDOA3-,left,in
-B013,IN2,IN2_CARDSEL,right,out
 B054,IN2,IN2_SDOA1+,left,in
 B056,IN2,IN2_SDOA1-,left,in
 B053,IN2,IN2_SDOB1+,left,in
@@ -48,7 +46,6 @@ B061,IN2,IN2_SDOA2+,left,in
 B063,IN2,IN2_SDOA2-,left,in
 B048,IN2,IN2_SDOA3+,left,in
 B050,IN2,IN2_SDOA3-,left,in
-A010,IN1,IN1_CARDSEL,right,out
 B042,IN1,IN1_SDOA1+,left,in
 B044,IN1,IN1_SDOA1-,left,in
 B041,IN1,IN1_SDOB1+,left,in
@@ -57,7 +54,6 @@ B047,IN1,IN1_SDOA2+,left,in
 B049,IN1,IN1_SDOA2-,left,in
 B036,IN1,IN1_SDOA3+,left,in
 B038,IN1,IN1_SDOA3-,left,in
-A009,IN0,IN0_CARDSEL,right,out
 B030,IN0,IN0_SDOA1+,left,in
 B032,IN0,IN0_SDOA1-,left,in
 B029,IN0,IN0_SDOB1+,left,in
@@ -68,6 +64,8 @@ B024,IN0,IN0_SDOA3+,left,in
 B026,IN0,IN0_SDOA3-,left,in
 B020,ICLK,ICLK_SYNC,right,out
 B023,ICLK,ICLK_SDI,right,out
+B074,ICLK,ICLK_DEBUG+,right,out
+B076,ICLK,ICLK_DEBUG-,right,out
 B081,ICLK,ICLK_MCLK_ENA+,right,out
 B083,ICLK,ICLK_MCLK_ENA-,right,out
 B082,ICLK,SCKA+,right,out
@@ -76,6 +74,10 @@ B087,ICLK,SCKB+,right,out
 B089,ICLK,SCKB-,right,out
 A048,ICLK,SYSCLK+,left,in
 A050,ICLK,SYSCLK-,left,in
+A009,BIST,IN3_CARDSEL,right,out
+A010,BIST,IN2_CARDSEL,right,out
+B013,BIST,IN1_CARDSEL,right,out
+B014,BIST,IN0_CARDSEL,right,out
 B018,BIST,BIST_SYNC,right,out
 B017,BIST,BIST_MOSI,right,out
 B019,BIST,BIST_SCLK,right,out
@@ -95,8 +97,6 @@ A084,unused,JX1_LVDS_23_N,left,nc
 A082,unused,JX1_LVDS_23_P,left,nc
 A019,unused,JX1_LVDS_2_N,left,nc
 A017,unused,JX1_LVDS_2_P,left,nc
-B076,unused,JX2_LVDS_19_N,left,nc
-B074,unused,JX2_LVDS_19_P,left,nc
 B090,unused,JX2_LVDS_23_N,left,nc
 B088,unused,JX2_LVDS_23_P,left,nc
 B025,unused,JX2_LVDS_2_N,left,nc
