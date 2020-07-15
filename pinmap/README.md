@@ -59,12 +59,12 @@ to install and:
 
 to update your installed version.
 
-I run kipart via the anaconda shell under windows.  cd to 'ilemt_hw\pinmap' before running kipart.
+I run kipart via the anaconda shell under windows.  cd to 'ilemt_fpga\pinmap' before running kipart.
 
 Kicad is not entirely happy with symbols being redefined after they have been placed on the Schematic.  Exit Kicad before generating a new symbol library:
 >kipart -b -w kipart_microzed.csv
 
-'-b' means create a single pin for a bundle pins with the same name (usually power).  '-w' allows overwriting.
+'-b' means create a single pin for a bundle of pins with the same name (usually power).  '-w' allows overwriting.
 
 This generates kipart_microzed.lib, which should be included in the Kicad symbol path (using Preferences/Manage Symbol Paths)
 
