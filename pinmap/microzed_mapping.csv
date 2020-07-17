@@ -20,8 +20,8 @@ JX,Pairing,Line,Sense,Unit,UNum,UOrder,LNum,LOrder,Name,Side,Type
 2,LVDS,20,DIFF,ICLK,4,2,6,2,ICLK_MCLK_ENA,right,out
 2,LVDS,22,DIFF,ICLK,4,3,6,4,SCKB,right,out
 2,LVDS,21,DIFF,ICLK,4,4,6,3,SCKA,right,out
-2,LVDS,19,DIFF,ICLK,4,5,6,1,ICLK_DEBUG,right,out
 1,LVDS,13,DIFF,ICLK,4,5,7,0,SYSCLK,left,in
+2,LVDS,19,DIFF,ICLK,4,5,6,1,ICLK_DEBUG,right,out
 1,LVDS,5,SE_N,OUT,5,0,0,9,DOUTL1,right,out
 1,LVDS,5,SE_P,OUT,5,1,0,8,DOUTL2,right,out
 1,LVDS,7,SE_P,OUT,5,2,0,10,DOUTL3,right,out
@@ -47,3 +47,15 @@ JX,Pairing,Line,Sense,Unit,UNum,UOrder,LNum,LOrder,Name,Side,Type
 2,LVDS,0,SE_N,BIST,6,4,1,9,BIST_SYNC,right,out
 2,LVDS,1,SE_N,BIST,6,5,1,10,BIST_MOSI,right,out
 2,LVDS,2,SE_P,BIST,6,6,1,11,BIST_SCLK,right,out
+1,LVDS,14,SE_P,DEBUG,7,1,8,1,DEBUG1,right,out
+1,LVDS,14,SE_N,DEBUG,7,2,8,2,DEBUG2,right,out
+1,LVDS,16,SE_P,DEBUG,7,3,8,3,DEBUG3,right,out
+1,LVDS,16,SE_N,DEBUG,7,4,8,4,DEBUG4,right,out
+1,LVDS,18,SE_P,DEBUG,7,5,8,5,DEBUG5,right,out
+1,LVDS,18,SE_N,DEBUG,7,6,8,6,DEBUG6,right,out
+1,LVDS,20,SE_P,DEBUG,7,7,8,7,DEBUG7,right,out
+1,LVDS,20,SE_N,DEBUG,7,8,8,8,DEBUG8,right,out
+1,LVDS,22,SE_P,DEBUG,7,9,8,9,LED1,right,out
+1,LVDS,22,SE_N,DEBUG,7,10,8,10,LED2,right,out
+1,LVDS,23,SE_P,DEBUG,7,11,8,11,LED3,right,out
+1,LVDS,23,SE_N,DEBUG,7,12,8,12,LED4,right,out
