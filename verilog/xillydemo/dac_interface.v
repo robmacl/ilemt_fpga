@@ -47,10 +47,10 @@ module dac_interface
    // Processor 100 MHz clock, maybe needed for synchronization?
    input wire 	     bus_clk,
 
-   // ### currently we just always output continuously, regardless of whether
-   // there is any new data available or not.  We ignore dac_open_bus (whether
-   // the pipe is connected) and dac_empty (whether there is data in the
-   // FIFO).
+   // ### currently we just always output continuously, regardless of
+   // whether there is any new data available or not.  We ignore
+   // dac_empty (whether there is data in the FIFO), but hold this
+   // module in reset when the DAC pipe is not open.
 
    // Input from Xillybus, true if the DAC pipe is open (bus_clk domain).
    input wire 	     dac_open_bus,

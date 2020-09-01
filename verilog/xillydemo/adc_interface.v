@@ -37,10 +37,11 @@ module adc_interface
    // SPI SCK for data ouput
    output reg 	     adc_scka,
 
-   // SYNC pulse to synchronize the phase of internal digital filter
-   // in multiple ADCs.  New data is available every DF conversions
-   // after SYNC. This is basically a reset, but SYNC which is
-   // consistent with existing phase does no harm.  An additional
+   // SYNC pulse to synchronize the phase of internal digital filter with the
+   // output interface.  This is necessary even when there is only one ADC so
+   // that you know which bits are being shifted out.  New data is available
+   // every DF conversions after SYNC. This is basically a reset, but SYNC
+   // which is consistent with existing phase does no harm.  An additional
    // function is to enable filter programming via SDI.
    output reg 	     adc_sync,
    // SPI SDI on ADCs, used to configure.
@@ -117,7 +118,7 @@ module adc_interface
    reg [2:0] state = reset_state;
 
    // The number of capture_clk cycles per MCLK conversion, giving
-   // total convert/aquire cycle of 1 us nom.  This must be even.
+   // total convert/acquire cycle of 1 us nom.  This must be even.
    parameter adc_cycles = 32;
 
    // The number of capture_clk cycles to wait while the MCLK conversion
