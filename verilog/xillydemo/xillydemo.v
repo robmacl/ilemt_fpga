@@ -292,6 +292,7 @@ module xillydemo
       );
    
    // 8-bit loopback
+   /*
    fifo_8x2048 fifo_8
      (
       .clk(bus_clk),
@@ -305,4 +306,5 @@ module xillydemo
       );
 
    assign  user_r_read_8_eof = 0;
+   */
 endmodule

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="adc_interface_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="adc_interface_tb" />
+            <top_module name="glbl" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="17500000000fs"></ZoomStartTime>
+      <ZoomEndTime time="30284974094fs"></ZoomEndTime>
+      <Cursor1Time time="105000000000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="149"></NameColumnWidth>
+      <ValueColumnWidth column_width="81"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="18" />
+   <wvobject fp_name="/adc_interface_tb/adc_mclk" type="logic">
+      <obj_property name="ElementShortName">adc_mclk</obj_property>
+      <obj_property name="ObjectShortName">adc_mclk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/adc_scka" type="logic">
+      <obj_property name="ElementShortName">adc_scka</obj_property>
+      <obj_property name="ObjectShortName">adc_scka</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/adc_sync" type="logic">
+      <obj_property name="ElementShortName">adc_sync</obj_property>
+      <obj_property name="ObjectShortName">adc_sync</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/adc_sdi" type="logic">
+      <obj_property name="ElementShortName">adc_sdi</obj_property>
+      <obj_property name="ObjectShortName">adc_sdi</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/adc1_sdoa" type="logic">
+      <obj_property name="ElementShortName">adc1_sdoa</obj_property>
+      <obj_property name="ObjectShortName">adc1_sdoa</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/capture_data" type="array">
+      <obj_property name="ElementShortName">capture_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">capture_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/capture_en" type="logic">
+      <obj_property name="ElementShortName">capture_en</obj_property>
+      <obj_property name="ObjectShortName">capture_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/user_r_read_32_open" type="logic">
+      <obj_property name="ElementShortName">user_r_read_32_open</obj_property>
+      <obj_property name="ObjectShortName">user_r_read_32_open</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/capture_full" type="logic">
+      <obj_property name="ElementShortName">capture_full</obj_property>
+      <obj_property name="ObjectShortName">capture_full</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/config_done" type="logic">
+      <obj_property name="ElementShortName">config_done</obj_property>
+      <obj_property name="ObjectShortName">config_done</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/adc_count" type="array">
+      <obj_property name="ElementShortName">adc_count[3:0]</obj_property>
+      <obj_property name="ObjectShortName">adc_count[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/adc_data_reg" type="array">
+      <obj_property name="ElementShortName">adc_data_reg[31:0]</obj_property>
+      <obj_property name="ObjectShortName">adc_data_reg[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/capture_count" type="array">
+      <obj_property name="ElementShortName">capture_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">capture_count[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/period" type="array">
+      <obj_property name="ElementShortName">period[31:0]</obj_property>
+      <obj_property name="ObjectShortName">period[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/the_adc/sync_gate" type="logic">
+      <obj_property name="ElementShortName">sync_gate</obj_property>
+      <obj_property name="ObjectShortName">sync_gate</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/the_adc/is_acquire" type="logic">
+      <obj_property name="ElementShortName">is_acquire</obj_property>
+      <obj_property name="ObjectShortName">is_acquire</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/the_adc/acquire_count" type="array">
+      <obj_property name="ElementShortName">acquire_count[1:0]</obj_property>
+      <obj_property name="ObjectShortName">acquire_count[1:0]</obj_property>
+   </wvobject>
+</wave_config>
