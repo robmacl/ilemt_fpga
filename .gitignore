@@ -1,3 +1,5 @@
 *.jou
 *.log
 *.tmp
+/xillinux
+/verilog/eval_board/vivado

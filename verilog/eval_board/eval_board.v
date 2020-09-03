@@ -1,4 +1,4 @@
-module xillydemo
+module eval_board
   (
    // see adc_interface module
    output adc_mclk,
