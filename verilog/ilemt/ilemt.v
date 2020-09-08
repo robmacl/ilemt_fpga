@@ -248,7 +248,7 @@ module ilemt
    wire dac_rden, dac_empty;
    wire [31:0] dac_data;
    
-   dac_interface the_dac
+   multi_dac_interface the_dac
       (
        .dac_bck(dac_bck),
        .dac_data_pin(dac_data_pin),
@@ -291,18 +291,6 @@ module ilemt
       .empty(user_r_read_32_empty)
       );
    
-   // 8-bit loopback
-   fifo_8x2048 fifo_8
-     (
-      .clk(bus_clk),
-      .srst(!user_w_write_8_open && !user_r_read_8_open),
-      .din(user_w_write_8_data),
-      .wr_en(user_w_write_8_wren),
-      .rd_en(user_r_read_8_rden),
-      .dout(user_r_read_8_data),
-      .full(user_w_write_8_full),
-      .empty(user_r_read_8_empty)
-      );
 
    assign  user_r_read_8_eof = 0;
 endmodule

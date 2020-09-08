@@ -2,14 +2,13 @@
 set origin_dir [file dirname [info script]]
 
 # What project to create.
-set proj_name eval_board
+set proj_name ilemt
 
 # Sources to add (by reference, in place)
 set source_files [list \
- $origin_dir/eval_board.v \
- $origin_dir/adc_interface.v \
- $origin_dir/dac_interface.v \
- $origin_dir/interface_params.v \
+ $origin_dir/ilemt.v \
+ $origin_dir/multi_adc_interface.v \
+ $origin_dir/multi_dac_interface.v \
 ]
 
 # Sources to copy into Vivado project tree.  Use this for IP to avoid
@@ -19,10 +18,10 @@ set source_files [list \
 set import_files [list \
  $origin_dir/ip/async_fifo_32/async_fifo_32.xci \
  $origin_dir/ip/capture_clk1/capture_clk1.xci \
-		     ]
+]
 
 set constraint_files [list \
- $origin_dir/eval_board.xdc \
+ $origin_dir/ilemt.xdc \
 ]
 
 # Do the rest of the setup, which is mostly xillybus specific.

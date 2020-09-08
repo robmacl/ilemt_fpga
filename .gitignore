@@ -3,3 +3,4 @@
 *.tmp
 /xillinux
 /verilog/eval_board/vivado
+vivado
