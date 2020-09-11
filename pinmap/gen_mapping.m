@@ -6,6 +6,7 @@
 orig_pins = readtable('microzed_pinout.xlsx');
 pins = orig_pins;
 
+% The variable part of the mapping
 mapping = table2struct(readtable('microzed_mapping.csv'));
 
 % We are going to create Name column in the output which has the Kicad
@@ -102,11 +103,12 @@ for (ix = 1:size(pins, 1))
 end
 [sorted_keys,ixs] = sortrows(sortkey, {'descend', 'descend', 'ascend', 'ascend'});
 pins = pins(ixs, :);
+map_order = map_order(ixs);
 
-% This seems kind of stupid, but we need to prepend the kipart header to
-% the output, so we write to a temp file, read it, append in matlab, and
-% write again.  Matlab does not seem to have a standard cross platform file
-% utility which can concatenate files.
+% Matlab does not seem to have a standard cross platform file utility which
+% can concatenate files.  This seems kind of stupid, but we need to prepend
+% the kipart header to the output, so we write to a temp file, read it, append
+% in matlab, and write again.
 tempfile = [tempname '.csv'];
 writetable(pins(:, 1:5), tempfile);
 rows = fileread(tempfile);
@@ -115,7 +117,7 @@ header = fileread('kipart_microzed_header.csv');
 ofile = 'kipart_microzed.csv';
 fid = fopen(ofile, 'w');
 if (fid < 0)
-  error('Failed to open %s for writing, maybe open in Excel?', ofile);
+  error('Failed to open %s for writing, maybe it''s open in Excel?', ofile);
 end
 fprintf(fid, '%s', [header rows]);
 fclose(fid);
@@ -124,6 +126,100 @@ fclose(fid);
 % microzed_pinout.xlsx, but also parallel to the output
 % kipart_microzed.csv, with the defined pin names and symbol units.
 writetable(pins, 'kipart_microzed_annotated.csv');
+
+% Vivado pin mapping via CSV file.  We only generate output for the pins which
+% are mapped (microzed_mapping.csv).  All the info comes from there except the
+% Zynq_Pad.  We use the "Single Port Diff Pair" CSV format so that we have
+% just one line per pair, and can stay parallel to mapping.
+% 
+% The IO standard is fixed for each type (diff and SE).  We could put
+% signalling info into the mapping file, but at the moment this would be
+% gratuitous generality.
+%{
+Zynq_Pad (from microzed_pinout) => Pin Number
+Unit => Interface
+Name => Signal Name
+Type => Direction
+
+Standard fixed values for these:
+  Either 2.5V slow CMOS or LVDS (w/ term on inputs)
+
+DiffPair Type
+DiffPair Signal
+IO Standard
+Drive
+Slew Rate
+DIFF_TERM
+%}
+
+viv_names = {
+    'Pin Number'
+    'Interface'		
+    'Signal Name'
+    'Direction'
+    'DiffPair Type'
+    'DiffPair Signal'
+    'IO Standard'
+    'Drive (mA)'
+    'Slew Rate'
+    'DIFF_TERM'
+};
+
+vivado_mapping = cell2table(repmat({''}, length(mapping), length(viv_names)));
+vivado_mapping.Properties.VariableNames = viv_names;
+
+pin_verilog = 'pin_defs_verilog.v';
+ofile = fopen(pin_verilog, 'w');
+if (ofile < 0)
+  error('Failed to open %s for writing', pin_verlog);
+end
+
+obuf_format = 'OBUFDS OBUFDS_%s (.O(%s), .OB(%s), .I(%s));\n';
+ibuf_format = 'IBUFDS IBUFDS_%s (.O(%s), .I(%s), .IB(%s));\n';
+
+for (ix = 1:length(mapping))
+  pin_ix = find(map_order == ix, 1, 'first');
+  vivado_mapping{ix, 'Pin Number'} = {string(pins{pin_ix, 'Zynq_Pad'})};
+  vivado_mapping{ix, 'Interface'} = {mapping(ix).Unit};
+  dir1 = mapping(ix).Type;
+  if (strcmp(dir1, 'in'))
+    dir1 = 'IN';
+  elseif (strcmp(dir1, 'out'))
+    dir1 = 'OUT';
+  else
+    error('Line %d, unknown direction: %s', ...
+          ix+1, dir1);
+  end
+  vivado_mapping{ix, 'Direction'} = {dir1};
+  
+  sense1 = mapping(ix).Sense;
+  if (strcmp(sense1, 'DIFF'))
+    name = mapping(ix).Name;
+    p_name = [name '_P'];
+    n_name = [name '_N'];
+    vivado_mapping{ix, 'Signal Name'} = {p_name};
+    vivado_mapping{ix, 'DiffPair Signal'} = {n_name};
+    vivado_mapping{ix, 'IO Standard'} = {'LVDS_25'};
+    vivado_mapping{ix, 'DiffPair Type'} = {'P'};
+    fprintf(ofile, 'wire %s;\n', name);
+    if (strcmp(dir1, 'IN'))
+      vivado_mapping{ix, 'DIFF_TERM'} = {'TRUE'};
+      fprintf(ofile, ibuf_format, name, name, p_name, n_name);
+    else
+      vivado_mapping{ix, 'DIFF_TERM'} = {'FALSE'};
+      fprintf(ofile, obuf_format, name, p_name, n_name, name);
+    end
+    
+  else
+    vivado_mapping{ix, 'Signal Name'} = {mapping(ix).Name};
+    vivado_mapping{ix, 'IO Standard'} = {'LVCMOS25'};
+    vivado_mapping{ix, 'Drive (mA)'} = {'4'};
+    vivado_mapping{ix, 'Slew Rate'} = {'SLOW'};
+  end
+end
+
+writetable(vivado_mapping, 'vivado_pin_defs.csv');
+fclose(ofile);
 
 
 % non-nested local function

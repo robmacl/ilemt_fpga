@@ -1,9 +1,9 @@
 microzed,M,main_board:Microzed
 Pin,Unit,Name,Side,Type
-A026,OUT,DOUTL1,right,out
-A024,OUT,DOUTL2,right,out
-A030,OUT,DOUTL3,right,out
-A020,OUT,DOUTL4,right,out
+A026,OUT,DAC_BCK,right,out
+A024,OUT,DAC_LRCK,right,out
+A030,OUT,DAC_DATA0,right,out
+A020,OUT,DAC_DATA1,right,out
 A032,OUT,DOUTL5,right,out
 A018,OUT,DOUTL6,right,out
 A036,OUT,DFB1+,left,in

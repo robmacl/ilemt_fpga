@@ -1,21 +1,191 @@
-module ilemt
-  (
-   // see adc_interface module
-   output adc_mclk,
-   output adc_scka,
-   output adc_sync,
-   output adc_sdi,
-   input  adc1_sdoa,
-   output capture_en,
+module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LED1, LED2, LED3, LED4, IN3_CARDSEL, IN2_CARDSEL, IN1_CARDSEL, IN0_CARDSEL, BIST_SYNC, BIST_MOSI, BIST_SCLK, DAC_BCK, DAC_LRCK, DAC_DATA0, DAC_DATA1, DOUTL5, DOUTL6, DFB1_P, DFB1_N, DFB2_P, DFB2_N, DFB3_P, DFB3_N, DFB4_P, DFB4_N, DOUT1_P, DOUT1_N, DOUT2_P, DOUT2_N, DOUT3_P, DOUT3_N, DOUT4_P, DOUT4_N, DOUT5_P, DOUT5_N, DOUT6_P, DOUT6_N, DOUT7_P, DOUT7_N, DOUT8_P, DOUT8_N, ICLK_SYNC, ICLK_SDI, ICLK_MCLK_ENA_P, ICLK_MCLK_ENA_N, SCKB_P, SCKB_N, SCKA_P, SCKA_N, SYSCLK_P, SYSCLK_N, ICLK_DEBUG_P, ICLK_DEBUG_N, IN3_SDOA1_P, IN3_SDOA1_N, IN3_SDOB1_P, IN3_SDOB1_N, IN3_SDOA2_P, IN3_SDOA2_N, IN3_SDOA3_P, IN3_SDOA3_N, IN2_SDOA1_P, IN2_SDOA1_N, IN2_SDOB1_P, IN2_SDOB1_N, IN2_SDOA2_P, IN2_SDOA2_N, IN2_SDOA3_P, IN2_SDOA3_N, IN1_SDOA1_P, IN1_SDOA1_N, IN1_SDOB1_P, IN1_SDOB1_N, IN1_SDOA2_P, IN1_SDOA2_N, IN1_SDOA3_P, IN1_SDOA3_N, IN0_SDOA1_P, IN0_SDOA1_N, IN0_SDOB1_P, IN0_SDOB1_N, IN0_SDOA2_P, IN0_SDOA2_N, IN0_SDOA3_P, IN0_SDOA3_N);
 
-   // see dac_interface module
-   output dac_bck,
-   output dac_data_pin,
-   output dac_lrck,
-   // DAC system clock, same as capture_clk
-   output dac_sck
+   /// Pin definitions:
    
-   );
+   // debug IOs
+   output DEBUG1;
+   output DEBUG2;
+   output DEBUG3;
+   output DEBUG4;
+   output DEBUG5;
+   output DEBUG6;
+   output DEBUG7;
+   output DEBUG8;
+   output LED1;
+   output LED2;
+   output LED3;
+   output LED4;
+
+   // Card select for input card configuration
+   output IN0_CARDSEL;
+   output IN1_CARDSEL;
+   output IN2_CARDSEL;
+   output IN3_CARDSEL;
+
+   // BIST DAC
+   output BIST_SYNC;
+   output BIST_MOSI;
+   output BIST_SCLK;
+
+   // Output slot IOs
+   output DAC_BCK;
+   output DAC_LRCK;
+   output DAC_DATA0;
+   output DAC_DATA1;
+   output DOUTL5;
+   output DOUTL6;
+   input  DFB1_P;
+   input  DFB1_N;
+   input  DFB2_P;
+   input  DFB2_N;
+   input  DFB3_P;
+   input  DFB3_N;
+   input  DFB4_P;
+   input  DFB4_N;
+   output DOUT1_P;
+   output DOUT1_N;
+   output DOUT2_P;
+   output DOUT2_N;
+   output DOUT3_P;
+   output DOUT3_N;
+   output DOUT4_P;
+   output DOUT4_N;
+   output DOUT5_P;
+   output DOUT5_N;
+   output DOUT6_P;
+   output DOUT6_N;
+   output DOUT7_P;
+   output DOUT7_N;
+   output DOUT8_P;
+   output DOUT8_N;
+
+   // Clock signals to ADC
+   output ICLK_SYNC;
+   output ICLK_SDI;
+   output ICLK_MCLK_ENA_P;
+   output ICLK_MCLK_ENA_N;
+   output SCKB_P;
+   output SCKB_N;
+   output SCKA_P;
+   output SCKA_N;
+
+   // Master clock from oscillator
+   input  SYSCLK_P;
+   input  SYSCLK_N;
+
+   // Debug output to coax jack
+   output ICLK_DEBUG_P;
+   output ICLK_DEBUG_N;
+
+   // Decimated ADC outputs
+   input  IN0_SDOA1_N;
+   input  IN0_SDOA1_P;
+   input  IN0_SDOA2_N;
+   input  IN0_SDOA2_P;
+   input  IN0_SDOA3_N;
+   input  IN0_SDOA3_P;
+   input  IN1_SDOA1_N;
+   input  IN1_SDOA1_P;
+   input  IN1_SDOA2_N;
+   input  IN1_SDOA2_P;
+   input  IN1_SDOA3_N;
+   input  IN1_SDOA3_P;
+   input  IN2_SDOA1_N;
+   input  IN2_SDOA1_P;
+   input  IN2_SDOA2_N;
+   input  IN2_SDOA2_P;
+   input  IN2_SDOA3_N;
+   input  IN2_SDOA3_P;
+   input  IN3_SDOA1_N;
+   input  IN3_SDOA1_P;
+   input  IN3_SDOA2_N;
+   input  IN3_SDOA2_P;
+   input  IN3_SDOA3_N;
+   input  IN3_SDOA3_P;
+
+   // Full rate ADC outputs (not used)
+   input  IN0_SDOB1_N;
+   input  IN0_SDOB1_P;
+   input  IN1_SDOB1_N;
+   input  IN1_SDOB1_P;
+   input  IN2_SDOB1_N;
+   input  IN2_SDOB1_P;
+   input  IN3_SDOB1_N;
+   input  IN3_SDOB1_P;
+
+
+   /// IO buffer instances for LVDS lines:
+   // (from pinmap/pin_defs_verilog.v)
+   wire   IN0_SDOA1;
+   IBUFDS IBUFDS_IN0_SDOA1 (.O(IN0_SDOA1), .I(IN0_SDOA1_P), .IB(IN0_SDOA1_N));
+   wire   IN0_SDOB1;
+   IBUFDS IBUFDS_IN0_SDOB1 (.O(IN0_SDOB1), .I(IN0_SDOB1_P), .IB(IN0_SDOB1_N));
+   wire   IN0_SDOA2;
+   IBUFDS IBUFDS_IN0_SDOA2 (.O(IN0_SDOA2), .I(IN0_SDOA2_P), .IB(IN0_SDOA2_N));
+   wire   IN0_SDOA3;
+   IBUFDS IBUFDS_IN0_SDOA3 (.O(IN0_SDOA3), .I(IN0_SDOA3_P), .IB(IN0_SDOA3_N));
+   wire   IN1_SDOA1;
+   IBUFDS IBUFDS_IN1_SDOA1 (.O(IN1_SDOA1), .I(IN1_SDOA1_P), .IB(IN1_SDOA1_N));
+   wire   IN1_SDOB1;
+   IBUFDS IBUFDS_IN1_SDOB1 (.O(IN1_SDOB1), .I(IN1_SDOB1_P), .IB(IN1_SDOB1_N));
+   wire   IN1_SDOA2;
+   IBUFDS IBUFDS_IN1_SDOA2 (.O(IN1_SDOA2), .I(IN1_SDOA2_P), .IB(IN1_SDOA2_N));
+   wire   IN1_SDOA3;
+   IBUFDS IBUFDS_IN1_SDOA3 (.O(IN1_SDOA3), .I(IN1_SDOA3_P), .IB(IN1_SDOA3_N));
+   wire   IN2_SDOA1;
+   IBUFDS IBUFDS_IN2_SDOA1 (.O(IN2_SDOA1), .I(IN2_SDOA1_P), .IB(IN2_SDOA1_N));
+   wire   IN2_SDOB1;
+   IBUFDS IBUFDS_IN2_SDOB1 (.O(IN2_SDOB1), .I(IN2_SDOB1_P), .IB(IN2_SDOB1_N));
+   wire   IN2_SDOA2;
+   IBUFDS IBUFDS_IN2_SDOA2 (.O(IN2_SDOA2), .I(IN2_SDOA2_P), .IB(IN2_SDOA2_N));
+   wire   IN2_SDOA3;
+   IBUFDS IBUFDS_IN2_SDOA3 (.O(IN2_SDOA3), .I(IN2_SDOA3_P), .IB(IN2_SDOA3_N));
+   wire   IN3_SDOA1;
+   IBUFDS IBUFDS_IN3_SDOA1 (.O(IN3_SDOA1), .I(IN3_SDOA1_P), .IB(IN3_SDOA1_N));
+   wire   IN3_SDOB1;
+   IBUFDS IBUFDS_IN3_SDOB1 (.O(IN3_SDOB1), .I(IN3_SDOB1_P), .IB(IN3_SDOB1_N));
+   wire   IN3_SDOA2;
+   IBUFDS IBUFDS_IN3_SDOA2 (.O(IN3_SDOA2), .I(IN3_SDOA2_P), .IB(IN3_SDOA2_N));
+   wire   IN3_SDOA3;
+   IBUFDS IBUFDS_IN3_SDOA3 (.O(IN3_SDOA3), .I(IN3_SDOA3_P), .IB(IN3_SDOA3_N));
+   wire   ICLK_MCLK_ENA;
+   OBUFDS OBUFDS_ICLK_MCLK_ENA (.O(ICLK_MCLK_ENA_P), .OB(ICLK_MCLK_ENA_N), .I(ICLK_MCLK_ENA));
+   wire   SCKB;
+   OBUFDS OBUFDS_SCKB (.O(SCKB_P), .OB(SCKB_N), .I(SCKB));
+   wire   SCKA;
+   OBUFDS OBUFDS_SCKA (.O(SCKA_P), .OB(SCKA_N), .I(SCKA));
+   wire   SYSCLK;
+   IBUFDS IBUFDS_SYSCLK (.O(SYSCLK), .I(SYSCLK_P), .IB(SYSCLK_N));
+   wire   ICLK_DEBUG;
+   OBUFDS OBUFDS_ICLK_DEBUG (.O(ICLK_DEBUG_P), .OB(ICLK_DEBUG_N), .I(ICLK_DEBUG));
+   wire   DFB1;
+   IBUFDS IBUFDS_DFB1 (.O(DFB1), .I(DFB1_P), .IB(DFB1_N));
+   wire   DFB2;
+   IBUFDS IBUFDS_DFB2 (.O(DFB2), .I(DFB2_P), .IB(DFB2_N));
+   wire   DFB3;
+   IBUFDS IBUFDS_DFB3 (.O(DFB3), .I(DFB3_P), .IB(DFB3_N));
+   wire   DFB4;
+   IBUFDS IBUFDS_DFB4 (.O(DFB4), .I(DFB4_P), .IB(DFB4_N));
+   wire   DOUT1;
+   OBUFDS OBUFDS_DOUT1 (.O(DOUT1_P), .OB(DOUT1_N), .I(DOUT1));
+   wire   DOUT2;
+   OBUFDS OBUFDS_DOUT2 (.O(DOUT2_P), .OB(DOUT2_N), .I(DOUT2));
+   wire   DOUT3;
+   OBUFDS OBUFDS_DOUT3 (.O(DOUT3_P), .OB(DOUT3_N), .I(DOUT3));
+   wire   DOUT4;
+   OBUFDS OBUFDS_DOUT4 (.O(DOUT4_P), .OB(DOUT4_N), .I(DOUT4));
+   wire   DOUT5;
+   OBUFDS OBUFDS_DOUT5 (.O(DOUT5_P), .OB(DOUT5_N), .I(DOUT5));
+   wire   DOUT6;
+   OBUFDS OBUFDS_DOUT6 (.O(DOUT6_P), .OB(DOUT6_N), .I(DOUT6));
+   wire   DOUT7;
+   OBUFDS OBUFDS_DOUT7 (.O(DOUT7_P), .OB(DOUT7_N), .I(DOUT7));
+   wire   DOUT8;
+   OBUFDS OBUFDS_DOUT8 (.O(DOUT8_P), .OB(DOUT8_N), .I(DOUT8));
+
+   
+   /// This section is all Xillybus stuff for the processor interface.
+   /// Some is for features which are not used.
 
    // Clock and quiesce
    wire    bus_clk;
@@ -195,16 +365,22 @@ module ilemt
    assign  user_r_mem_8_eof = 0;
    assign  user_w_mem_8_full = 0;
 
+   // End Xillybus stuff
+
+
+
+/// ILEMT interfaces:
+
+   // ### change to use SYSCLK
    // For now, the ADC clock capture_clk is derived from bus_clk.
    //
    // The output pin clocks adc_scka and adc_mclk are derived from
    // capture_clk.  Not sure that these are actually a clocks from
    // synthesis perspective, since SPI clock uses both edges, and MCLK
-   // is not used to "clock" any FPGA logic.  capture_clk runs at 20x
-   // the MCLK rate, 10x the SPI data rate.
+   // is not used to "clock" any FPGA logic.
 
-   // 24.576 MHz nominal.  This gives the same 48 ksps as the audio
-   // interface (modulo frequency error).
+   // ### should be 51.2 MHz for 1.6 MHz MCLK with adc_cycles=32,
+   // giving 50 ksps, with decimate 32.
    wire capture_clk;
    capture_clk1 capture_clk1_instance
      (
@@ -212,21 +388,38 @@ module ilemt
       .clk_fpga_1(bus_clk)
       );
 
+
    // Output from ADC to FIFO
    wire [31:0] capture_data;
 
    // ADC FIFO full.  
    wire        capture_full;
-   
+
+   // Bundle all of the ADC inputs into a single word.
+   wire [adc_channels-1:0] ADC_SDOA;
+   assign ADC_SDOA
+     = {IN0_SDOA1,
+	IN0_SDOA2,
+	IN0_SDOA3,
+	IN1_SDOA1,
+	IN1_SDOA2,
+	IN1_SDOA3,
+	IN2_SDOA1,
+	IN2_SDOA2,
+	IN2_SDOA3,
+	IN3_SDOA1,
+	IN3_SDOA2,
+	IN3_SDOA3};
+
    // Logic for acquiring on the ADC, stores data into the Xillybus
    // read 32 fifo, fifo_32
    multi_adc_interface the_adc
      (
-      .adc_mclk(adc_mclk),
-      .adc_scka(adc_scka),
-      .adc_sync(adc_sync),
-      .adc_sdi(adc_sdi),
-      .adc1_sdoa(adc1_sdoa),
+      .adc_mclk_ena(ICLK_MCLK_ENA), // ### not right until capture_clk is made synchronous with SYSCLK
+      .adc_scka(SCKA),
+      .adc_sync(ICLK_SYNC),
+      .adc_sdi(ICLK_SDI),
+      .adc1_sdoa(ADC_SDOA),
       .capture_clk(capture_clk),
       .bus_clk(bus_clk),
       .capture_data(capture_data),
@@ -239,20 +432,23 @@ module ilemt
 
    // Sends data from 32 bit write FIFO to DAC.
    // 
-   // ### somehow we set things up so that ADC actually starts when
-   // the first DAC data arrives.  This insures synchronization.  Or
-   // maybe we just skip that for now.  We have been making do without
-   // any synchronization so far, but it could allow us to know what
-   // the phase should be.  Advantage of not doing is that it would
-   // allow us to read data when no output is supplied.
+   // ### eventually set things up so that ADC actually starts when
+   // the first DAC data arrives.  This insures synchronization.  We
+   // have been making do without any synchronization so far, but it
+   // could allow us to know what the phase should be.  Advantage of
+   // not doing is that allows us to read data when no output is
+   // supplied.
    wire dac_rden, dac_empty;
    wire [31:0] dac_data;
    
+   assign dac_sck = capture_clk;
+   wire [1:0]  DAC_DATA;
+   assign DAC_DATA = {DAC_DATA0, DAC_DATA1};
    multi_dac_interface the_dac
       (
-       .dac_bck(dac_bck),
-       .dac_data_pin(dac_data_pin),
-       .dac_lrck(dac_lrck),
+       .dac_bck(DAC_BCK),
+       .dac_data(DAC_DATA),
+       .dac_lrck(DAC_LRCK),
        .capture_clk(capture_clk),
        .bus_clk(bus_clk),
        .dac_open_bus(user_w_write_32_open),
@@ -261,7 +457,6 @@ module ilemt
        .dac_empty(dac_empty)
        );
 
-   assign dac_sck = capture_clk;
 
    // DAC input data
    async_fifo_32 dac_fifo

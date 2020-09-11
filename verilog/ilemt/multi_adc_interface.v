@@ -1,39 +1,52 @@
-// Interface to the LTC2500-32 ADC
+// Interface to LTC2512-24 (and LTC2500-32 ADCs with parameter tweaks)
 //
-// This chip is an oversampling 32 bit ADC with an internal decimation filter.
+// This module supports reading multiple ADCs in parallel, using a single
+// state machine and clocking for all, with duplication of the input
+// datapaths.  After a word is read (on all ADCs in parallel) the result data
+// words are clocked out sequentially to the output FIFO.  The input data
+// shift registers are double buffered so that we can overlap the FIFO output
+// with input acqusition.
+//
+// The LTC2512-24 and LTC2500-32 are very similar in pinout and internal
+// architecture.  The LTC2512 is significantly cheaper, and only supports
+// configuring the filter by pin-strapping at a decimation rates of 4, 8, 16,
+// 32, and only using the "flat" FIR decimation filter.  The LTC2500 has more
+// filter options, and is configured by SPI.  Currently we are using the
+// LTC2512 because it is cheaper and seems like it should work just as well
+// for us.  I've kept the SPI configuration code in case we want it in the
+// future.
+//
+// The architecture is an oversampling ADC with an internal decimation filter.
 // Each conversion cycle is triggered by MCLK.  We only read out the filtered
 // data (at the decimated rate), but we need to synchronize acquisition with
 // MCLK and SYNC.  For one thing, we are not supposed to be using the SPI bus
-// during the conversion time (to reduce noise).
+// during the conversion time (to reduce noise).  (This reduces the available
+// bus bandwidth quite a bit.)
 //
 // Because the filtered output is only updated every N cycles we can get away
 // with shifting out only a few bits on each conversion, and so use a lower
-// SPI clock.  This is called "distributed read" in the LTC2500 documentation.
+// SPI clock.  This is called "distributed read" in the LTC25xx documentation.
 // capture_clk is 2x the SPI clock rate.  This code is designed to work when
 // capture_clk is asynchronous wrt bus_clk (or if it is synchronous).
 //
-// The nominal MCLK rate is 1 MHz, but this can be less or (slightly) more in
-// order to get the desired conversion rate.  The actual MCLK rate is set by
-// capture_clock in combination with convert_cycles and related parameters.
+// The nominal MCLK rate is 1.6 MHz (1 MHz), but this can be less or
+// (slightly) more in order to get the desired conversion rate.  The actual
+// MCLK rate is set by capture_clock in combination with convert_cycles and
+// related parameters.
 // 
-// The ADC output decimation and filter type has to be configured over SPI.
 
 module multi_adc_interface
-  `include "interface_params.v"
+`include "adc_params.v"
   (
    /// IO pins and clocks:
    
-   // All of these signals are available via the LTC DTC2222A QuikEval
-   // connector.  May be a nuisance that we do not have access to data
-   // ready DRL or BUSY on QuikEval.  We could patch it out separately.
-
    /// output clocks and data in common to all ADCs:
    
    // Trigger clock positive edge to start conversion. "For best results, the
    // falling edge of MCLK should occur within 40ns from the start of the
    // conversion, or after the conversion has been completed."  We clear MCLK
    // after the conversion should be done (according to conversion time spec).
-   output reg	     adc_mclk,
+   output reg 	     adc_mclk,
    // SPI SCK for data ouput
    output reg 	     adc_scka,
 
@@ -47,26 +60,20 @@ module multi_adc_interface
    // SPI SDI on ADCs, used to configure.
    output reg 	     adc_sdi,
 
-   // SPI SDO for each ADC.
-   input 	     adc1_sdoa,
+   // SPI SDO for decimated output on each ADC.  The first ADC (IN0_SDOA1) is
+   // in bit 11.
+   input [11:0]      adc_sdoa,
 
    // capture_clk is the clock for the acquisition process. Frequency
    // may be synthesized to get a particular data rate, or be derived
    // from an external input.  We don't push out a sample on every
    // clock, only when capture_en is asserted.
    // 
-   // The SPI clock is 1/2 this.  For the eval board setup we will
-   // keep a modest < 10 MHz SPI clock rate and use "distributed
-   // read", where we clock out only a few bits for every conversion
-   // cycle.  See adc_cycles parameter.
+   // The SPI clock is 1/2 this.  We keep a modest 16 MHz SPI clock rate and
+   // use "distributed read", where we clock out only a few bits for every
+   // conversion cycle.  See adc_cycles parameter.
    input 	     capture_clk,
 
-   /*
-   // This is a parameter for now.
-   // Config word to load into ADC.  The ADC is configured when we
-   // exist reset, once the FIFO has been opened on the host.
-   input reg [11:0]  adc_config,
-   */
    
    /// Xillybus interface stuff:
 
@@ -76,7 +83,7 @@ module multi_adc_interface
    input wire 	     bus_clk,
   
    // We are supplying data to the user_r_read_32 FIFO.  These are
-   // FIFO write (capture_clk domain).
+   // attached to FIFO write port (capture_clk domain).
    output reg [31:0] capture_data,
    output wire 	     capture_en,
    input wire 	     capture_full,
@@ -106,7 +113,7 @@ module multi_adc_interface
    wire is_sync;
    wire is_acquire;
 
-   // Acquire state machine states. See implementation below. 
+   // Acquire state machine states. See state machine implementation below. 
    parameter
      reset_state = 0, // In reset
      config_state = 1, // Configuring ADC
@@ -117,14 +124,8 @@ module multi_adc_interface
      wait_state = 6; // Waiting for next conversion
    reg [2:0] state = reset_state;
 
-   // The number of capture_clk cycles per MCLK conversion, giving
-   // total convert/acquire cycle of 1 us nom.  This must be even.
-   parameter adc_cycles = 32;
-
-   // The number of capture_clk cycles to wait while the MCLK conversion
-   // completes (700 ns nom).  Datasheet max is 660 ns (which is a min for
-   // us).  22 = 687 ns with 32 MHz capture_clk.  This must be even.
-   parameter convert_cycles = 22;
+
+/// Conversion timing parameters and adc_cycle counter:
 
    // Count up capture_clk cycles since start of the MCLK convert/acquire
    // cycle.  The LSB defines the SPI clock.  This advances continuously (mod
@@ -135,8 +136,9 @@ module multi_adc_interface
    // Note: You will need to increase the width if adc_cycles > 32.
    reg [4:0] adc_cycle;
 
-   // Where we are in the convert/acquire cycle.  These comparators advance
-   // the state machine.
+   // Where we are in the convert/acquire adc_cycle.  These comparators
+   // advance the state machine.
+
    wire convert_end, wait_end, sync_end, acquire_end;
 
    // End of ADC conversion.
@@ -146,19 +148,15 @@ module multi_adc_interface
    // SYNC pulse.  Data acqusition happens after that.
    assign sync_end = (adc_cycle == convert_cycles + 2 - 1);
 
-   // Done acquiring data for this MCLK convert cycle (determines how many
-   // bits we shift in).  This implicitly defines the number of bits to
-   // acquire on each convert/acquire cycle.  Our acquire state must fit
-   // within the acqusition window of adc_cycles - convert_cycles - 2.  Each
-   // bit requires 2 cycles.
-   assign acquire_end = (adc_cycle == convert_cycles + 6 - 1);
+   // Done acquiring data for this MCLK convert cycle.  Our acquire state has
+   // to happen within the acqusition window of:
+   //   adc_cycles - convert_cycles - 2
+   // Each bit requires 2 cycles.
+   assign acquire_end = (adc_cycle == sync_end + 2*acquire_nbits);
 
    // End of wait, time to start new cycle.
    // Note: this may be identical to acquire_end if there are no wait cycles.
    assign wait_end = (adc_cycle == adc_cycles - 1);
-
-   // Number of bits needed to hold acquire_bits.
-   parameter acquire_bits_bits = 2;
    
    always @(posedge capture_clk) begin
       if (reset || wait_end)
@@ -167,12 +165,23 @@ module multi_adc_interface
 	adc_cycle <= adc_cycle + 1;
    end
 
+
+/// ADC input datapaths:
+
    // What bit we acquire next.  When we shift in bit 0 we have a complete
    // input word.  So this decrements across multiple convert/acquire cycles,
    // tracking where we are in reading the filtered output word.  When
    // acquire_bit is 0 we are *about* to acquire the last bit.
+   ### have an extra value to represent that we are done acquiring?  eg if we
+   count up from 0, then a value of adc_bits could indicate that we are done
+   (until the next word is ready, according to decimate_counter)
    reg [4:0] acquire_bit;
 
+   // Where we are in the decimation cycle.  Counts from adc_decimate - 1 down
+   // to 0.  When decimate_counter is 0 then a new output word will be
+   // available at the start of the next MCLK cycle.
+   reg [4:0] decimate_counter;
+   
    // Pulsed for one capture_clk when we have shifted the last bit of
    // new data into capture_data.  Feeds to capture_en for the FIFO.
    reg load_complete;
@@ -187,35 +196,78 @@ module multi_adc_interface
    // first conversion in the new decimate period).  Also set on reset so that
    // we sync before reading the first word (which is otherwise messed up by
    // the configuration process).
+   ### there can be dead time from the last bit acquired until start of next word
    reg sync_gate = 1;
+
+
+   // Shift in a bit from the ADCs if it is a negative edge on adc_scka (so
+   // scka is currently 1).  adc_sync is also treated as a pseudo-clock here
+   // because we have to clock in the first data bit *before* the first scka
+   // pulse, since the MSB is already sitting on SDOA.  What would be the
+   // first SCKA pulse is suppressed in this case so that we don't acquire an
+   // extra bit on the first conversion, see adc_scka generation.
+   ### and we have not already all the data for this word.  But I guess using
+   adc_scka takes care of this, as long as the adc_scka generation takes care
+   not to clock when there is no data.  It is probably harmless to generate
+   scka pulses when the word is done, but...  As long as we avoid acquire_state
+   adc_scka will not happen.
+   assign shift_ena = (adc_scka || adc_sync);
+
+   // This is an array of the connections between the stages in the buffer
+   // FIFO chain.  The word ready for output appears at fifo_data[0], while
+   // fifo_data[adc_channels] is forced to zero (so that the FIFO fills with
+   // zeros as we clock out the words).
+   wire [(adc_bits-1):0] fifo_data [0:adc_channels];
+   assign fifo_data[adc_channels] = 0;
    
-   // Datapaths for capture_data shift register and bit counter acquire_bit.
+
+   ### use start_state or sync_state to trigger decimate counter. maybe don't
+   go into acquire_state during the dead time after the last data has loaded,
+   and the new data isn't cooked yet?
+
+   ### need code to dump output into the FIFO.  This can be started by
+   load_complete, but we need some state to tell when we are done (have pushed
+   all the data).  A word can go out every capture_clk cycle.
+				    
+   // Datapaths for ADC data (adc_register) and bit counter acquire_bit.
    always @(posedge capture_clk) begin
       if (~(is_acquire || is_sync)) begin
 	 // If not acquiring, initialize between-acquisition state.
 	 // In reset_state, set the shifter position acquire_bit also.
 	 if (state == reset_state) begin
-	    acquire_bit <= 31;
-	    //capture_data <= 0;
+	    acquire_bit <= adc_bits - 1;
+	    decimate_counter <= adc_decimate - 1;
 	 end
 	 load_complete_delay <= 0;
       end
-      else if (adc_scka || adc_sync) begin
-	 // Shift in a bit if it is a negative edge on adc_scka (so scka is
-	 // currently 1).  adc_sync is also treated as a pseudo-clock here
-	 // because we have to clock in the first data bit *before* the first
-	 // scka pulse, since the MSB is already sitting on SDOA.  What would
-	 // be the first SCKA pulse is suppressed in this case so that we
-	 // don't acquire an extra bit on the first conversion, see adc_scka
-	 // generation.
-	 capture_data <= {capture_data[30:0], adc1_sdoa};
-	 // acquire_bit simply wraps around from 0 to 31 when we read
-	 // bit 0.
-	 acquire_bit <= acquire_bit - 1;
-	 load_complete_delay <= (acquire_bit == 0);
-      end
       else begin
-	 load_complete_delay <= 0;
+	 genvar chan;
+	 generate
+	    for (chan = 0; chan < adc_channels ; chan = chan + 1) begin
+	       adc_register adc_inst (.clock(capture_clk),
+				      .in_bit(adc_sdoa[chan]),
+				      .shift_ena(shift_ena),
+				      .shifter_load_ena(load_shifter),
+				      .ext_load_ena(load_ext),
+				      .ext_data(fifo_data[chan+1]),
+				      .out_reg(fifo_data[chan])
+				     );
+	    end
+	 endgenerate
+	 
+	 if (shift_ena) begin
+	    // When we read bit 0 we wrap acquire_bit around to adc_bits - 1 to
+	    // get ready for the next word.
+	    if (acquire_bit == 0)
+	      acquire_bit <= adc_bits - 1;
+	    else
+	      acquire_bit <= acquire_bit - 1;
+	    
+	    load_complete_delay <= (acquire_bit == 0);
+	 end
+	 else begin
+	    load_complete_delay <= 0;
+	 end
       end
 
       // Load complete is delayed so that capture_en is asserted after
@@ -227,6 +279,12 @@ module multi_adc_interface
 	sync_gate <= 0;
    end
 
+
+   /// SPI configuration output
+   //
+   // We go through the motions, but nobody is listening when we use the
+   // LTC2512-24.
+
    // The output shifter for config data.
    reg [11:0] config_shifter;
    // Our output bit counter is a one-hot shifter. When the MSB is 1 we are
@@ -234,12 +292,6 @@ module multi_adc_interface
    // edge to clock the data in to the ADC.
    reg [12:0] config_done_shift;
 
-   // 10: we are configuring
-   // 00: DGE off DCE off, gain expansion and compression
-   // 0100: DF=16, decimation factor
-   // 0010: filter=SINC2, decimation filter type, or 
-   // 0110: filter=FLAT
-   parameter adc_config = 12'b10_00_0100_0110;
    always @(posedge capture_clk) begin
       if (~is_config) begin
 	 config_shifter <= adc_config;
@@ -266,13 +318,18 @@ module multi_adc_interface
       else
 	adc_sdi = 0;
    end
-   
+
+
+   /// MCLK state machine
+   //
    // This state machine cycles sequentially from start_state through
-   // wait_state during each MCLK convert/acquire cycle (during
-   // adc_cycles positive edges on capture_clk).  All this state
-   // machine is doing is sequencing stuff that happens above by
-   // changing state at the right time.  The state drives the ADC
-   // clocks and the shifter datapaths.
+   // wait_state during each MCLK convert/acquire cycle (during adc_cycles
+   // positive edges on capture_clk).  The machine does not generate any
+   // signals other than the state, it just changes state at the right time to
+   // drive the ADC clocks and the shifter datapaths.  After initialization,
+   // this machine cycles once per MCLK cycle.  Any ideas of where we are in
+   // the full word acquisition is maintained in counters.
+
    assign is_config = (state == config_state);
    assign is_sync = (state == sync_state);
    assign is_acquire = (state == acquire_state);
@@ -321,6 +378,8 @@ module multi_adc_interface
 
 	     // Delay here during SYNC window (whether we send pulse this time
 	     // or not).
+	     ### don't acquire if we are done with loading the current word.
+	     I guess we can skip directly to wait_state?
 	     sync_state: begin
 		if (sync_end) 
 		  state <= acquire_state;
@@ -356,6 +415,8 @@ module multi_adc_interface
 	end
      end // always @ (posedge capture_clk)
 
+   
+   /// ADC clock generation (SKCA, MCLK, SYNC):
 
    // True if the next posedge on capture_clk should generate a positive edge
    // on the SPI clock scka (assuming that the clock is gated on). scka always
@@ -369,11 +430,10 @@ module multi_adc_interface
    // Generate output clock-like signals.  This is synchronous so that we
    // don't generate any runt clock pulses.
    always @(posedge capture_clk) begin
-      // Generate SPI clock.
-      // The sync_gate thing suppresses the output of what would be the clock
-      // pulse for bit 31 because bit 31 is already sitting on SDOA even
-      // before the first pulse.  So we only actually generate 31 clock
-      // pulses, not 32.
+      // Generate SPI clock.  The sync_gate thing suppresses the output of
+      // what would be the clock pulse for bit adc_bits - 1 because bit
+      // adc_bits - 1 is already sitting on SDOA even before the first pulse.
+      // So we only actually generate adc_bits - 1 clock pulses, not adc_bits.
       if ((is_acquire && !sync_gate) || is_config)
 	adc_scka <= scka_positive;
       else
@@ -398,6 +458,7 @@ module multi_adc_interface
 		   || (is_sync && sync_gate && scka_positive));
    end
 
+   
    /// Xillybus stuff:
    
    // Clock crossing logic: bus_clk -> capture_clk

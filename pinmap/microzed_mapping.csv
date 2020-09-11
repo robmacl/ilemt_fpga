@@ -22,10 +22,10 @@ JX,Pairing,Line,Sense,Unit,UNum,UOrder,LNum,LOrder,Name,Side,Type
 2,LVDS,21,DIFF,ICLK,4,4,6,3,SCKA,right,out
 1,LVDS,13,DIFF,ICLK,4,5,7,0,SYSCLK,left,in
 2,LVDS,19,DIFF,ICLK,4,5,6,1,ICLK_DEBUG,right,out
-1,LVDS,5,SE_N,OUT,5,0,0,9,DOUTL1,right,out
-1,LVDS,5,SE_P,OUT,5,1,0,8,DOUTL2,right,out
-1,LVDS,7,SE_P,OUT,5,2,0,10,DOUTL3,right,out
-1,LVDS,3,SE_N,OUT,5,3,0,7,DOUTL4,right,out
+1,LVDS,5,SE_N,OUT,5,0,0,9,DAC_BCK,right,out
+1,LVDS,5,SE_P,OUT,5,1,0,8,DAC_LRCK,right,out
+1,LVDS,7,SE_P,OUT,5,2,0,10,DAC_DATA0,right,out
+1,LVDS,3,SE_N,OUT,5,3,0,7,DAC_DATA1,right,out
 1,LVDS,7,SE_N,OUT,5,4,0,11,DOUTL5,right,out
 1,LVDS,3,SE_P,OUT,5,5,0,6,DOUTL6,right,out
 1,LVDS,9,DIFF,OUT,5,6,0,12,DFB1,left,in
