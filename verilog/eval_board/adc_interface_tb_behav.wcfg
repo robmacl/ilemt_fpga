@@ -11,9 +11,9 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="52636996230fs"></ZoomStartTime>
-      <ZoomEndTime time="65362423891fs"></ZoomEndTime>
-      <Cursor1Time time="57725000000fs"></Cursor1Time>
+      <ZoomStartTime time="57142233856fs"></ZoomStartTime>
+      <ZoomEndTime time="62792321117fs"></ZoomEndTime>
+      <Cursor1Time time="46475000000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="197"></NameColumnWidth>
@@ -23,10 +23,6 @@
    <wvobject fp_name="/adc_interface_tb/adc_mclk" type="logic">
       <obj_property name="ElementShortName">adc_mclk</obj_property>
       <obj_property name="ObjectShortName">adc_mclk</obj_property>
-   </wvobject>
-   <wvobject fp_name="/adc_interface_tb/adc_scka" type="logic">
-      <obj_property name="ElementShortName">adc_scka</obj_property>
-      <obj_property name="ObjectShortName">adc_scka</obj_property>
    </wvobject>
    <wvobject fp_name="/adc_interface_tb/adc_sync" type="logic">
       <obj_property name="ElementShortName">adc_sync</obj_property>
@@ -105,5 +101,9 @@
    <wvobject fp_name="/adc_interface_tb/the_adc/load_complete_delay" type="logic">
       <obj_property name="ElementShortName">load_complete_delay</obj_property>
       <obj_property name="ObjectShortName">load_complete_delay</obj_property>
+   </wvobject>
+   <wvobject fp_name="/adc_interface_tb/adc_scka" type="logic">
+      <obj_property name="ElementShortName">adc_scka</obj_property>
+      <obj_property name="ObjectShortName">adc_scka</obj_property>
    </wvobject>
 </wave_config>

@@ -372,12 +372,31 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
 /// ILEMT interfaces:
 
    // ### change to use SYSCLK
-   // For now, the ADC clock capture_clk is derived from bus_clk.
+   //
+   // capture_clk should be SYSCLK shifted by 180 degrees to give maximum
+   // setup/hold time on the MCLK_ENA signal.  Ideally this should be
+   // phase-tweaked to get that measured relationship at the MCLK flip-flop.
+   // This gives 1/2 cycle of lead on all of the ADC signals wrt MCLK, which
+   // is of no great significance except that we have to make sure that we
+   // delay SPI acqusition until conversion is complete even in the presence
+   // of this delay.  For us this forces an increase in the convert_cycles
+   // parameter, which further squeezes the already somewhat tight acqusition
+   // window on the LTC2512-24.
    //
    // The output pin clocks adc_scka and adc_mclk are derived from
-   // capture_clk.  Not sure that these are actually a clocks from
-   // synthesis perspective, since SPI clock uses both edges, and MCLK
-   // is not used to "clock" any FPGA logic.
+   // capture_clk.
+   // 
+   // ### need attention here:
+   // We should constrain at least the leading edges of MCLK and SCKA.  As
+   // well as the MCLK phase requirement above, we also need to be confident
+   // that there is enough setup time for SDOA from posedge SCKA with the
+   // various delays.  See ilemt_fpga/docs/spi_timing_budget.xlsx
+   //
+   // I hear it is difficult to constrain both leading and trailing edges such
+   // as might make sense with SPI, but it seems that we don't care about the
+   // trailing edge of SCKA.  This is when we nominally sample SDOA, but the
+   // ADC doesn't do anything with that edge.  And the actual sampling is
+   // driven by posedge capture_clk.
 
    // ### should be 51.2 MHz for 1.6 MHz MCLK with adc_cycles=32,
    // giving 50 ksps, with decimate 32.

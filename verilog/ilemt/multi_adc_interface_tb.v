@@ -1,5 +1,5 @@
-
-module adc_interface_tb ();
+module multi_adc_interface_tb ();
+`include "adc_params.v"
 
    // pins:  Direction r.e. adc_interface module
    wire adc_mclk, // out
@@ -7,82 +7,141 @@ module adc_interface_tb ();
 	adc_sync, // out 
 	adc_sdi; // out
 
-   reg adc1_sdoa = 0; // in
+   reg [adc_channels-1:0] adc_sdoa = 0; // in
    
-   // reg [11:0] adc_config;
-
-   // Xillybus/FIFO interface:
-   wire [31:0] capture_data; // out, FIFO
-   wire        capture_en; // out, FIFO
-   reg 	       user_r_read_32_open = 0; // in Xillybus
-   reg 	       capture_full = 0; // in, fifo handshaking
-
-   parameter period = 50; // Not the real period 70.989
-   reg clk = 0;
+   // clocks
+   parameter period = 19.53; 
+   reg capture_clk = 0;
    initial begin
-      forever clk = #(period / 2) ~clk;
+      forever capture_clk = #(period / 2) ~capture_clk;
    end
+
+   parameter bus_period = 10;
+   reg bus_clk = 0;
+   initial begin
+      forever bus_clk = #(bus_period / 2) ~bus_clk;
+   end
+
+   reg user_r_read_32_open = 0; // in from Xillybus
 
    initial begin
       #(100*period)
 	user_r_read_32_open = 1;
-      #(100*20*period);
+      #(4*adc_decimate*adc_cycles*period);
       $stop;
    end
 
-   // True if we have seen an MCLK, configuration should be complete.
-   reg config_done = 0;
-   always @(posedge clk) begin
-      if (adc_mclk)
-	config_done = 1;
-   end
-   
-   /// Simulated ADC output
-   // Sequential outputs are like 0x1A1B1C1D, 0x2A2B2C2D, etc.
+
+   /// Xillybus/FIFO interface:
+   // in/out directions r.e. multi_adc_interface module
 
-   // Counter used to distinguish word data.
-   reg [3:0] adc_count = 1;
-   // ADC output register.
-   reg [31:0] adc_data_reg = 0;
+   // write side (capture_clk domain)
+   wire [31:0] capture_data; // out, FIFO
+   wire        capture_en; // out, FIFO
+   reg 	       capture_full = 0; // in, fifo handshaking
 
-   always @(posedge adc_sync) begin
-      // Load new simulated data in output register when we have finished
-      // previous output.  Using adc_sync keeps us in synch with adc_interface
-      // (and simulates the ADC).  The ADC actually loads the output register
-      // on the negative edge of DRL (after the final conversion of the
-      // decimate block completes).
-      adc_data_reg <= {adc_count, 4'hA, adc_count, 4'hB,
-		       adc_count, 4'hC, adc_count, 4'hD};
-      adc_count <= adc_count + 1;
-   end
+   // read side of FIFO (bus_clk domain)
+   wire        user_r_read_32_rden = 1;
+   wire [31:0] user_r_read_32_data;
+   wire        user_r_read_32_valid;
 
    // Number of words captured. 
    reg [31:0] capture_count = 1;
+
+   /*
+   // ### couldn't figure out how to get FIFO IP working in simulator
+   // ADC output data FIFO
+   async_fifo_32 adc_fifo
+     (
+      .rst(!user_r_read_32_open),
+      .wr_clk(capture_clk),
+      .wr_en(capture_en),
+      .din(capture_data),
+      .full(capture_full),
+
+      .rd_clk(bus_clk),
+      .rd_en(user_r_read_32_rden),
+      .dout(user_r_read_32_data),
+      .valid(user_r_read_32_valid)
+      );
+
    // Display latched data.
-   always @(posedge clk) begin
+   always @(posedge bus_clk) begin
+      if (user_r_read_32_valid) begin
+	 $display("FIFO data %d: %x", capture_count, user_r_read_32_data);
+	 capture_count = capture_count + 1;
+      end
+   end
+   */
+
+   // Display latched data.
+   always @(posedge capture_clk) begin
       if (capture_en) begin
 	 $display("capture_data %d: %x", capture_count, capture_data);
 	 capture_count = capture_count + 1;
       end
    end
 
-   always @(*)
-     adc1_sdoa = adc_data_reg[31];
-
-   always @(posedge adc_scka) begin
-      // Shift out new data on each adc_scka positive edge.  This happens
-      // during the config period also, which is what the chip does.
-      adc_data_reg <= {adc_data_reg[30:0], 1'bX};
+   
+   // True if we have seen an MCLK, configuration should be complete.
+   reg config_done = 0;
+   always @(posedge capture_clk) begin
+      if (adc_mclk)
+	config_done = 1;
    end
 
-   adc_interface the_adc
+   
+   /// Simulated ADC output
+
+   // Sequential outputs are hex cAwBcCwW, where c is the channel and w is the
+   // output word.  The top 8 bits are lost with adc_bits=24.
+
+   // Counter used to distinguish word data.
+   reg [3:0] adc_count = 1;
+
+   // ADC output registers
+   reg [adc_bits-1:0] adc_data_reg [adc_channels-1:0];
+
+   always @(posedge adc_sync) begin: load
+      // Load new simulated data in output register when we have finished
+      // previous output.  Using adc_sync keeps us in synch with adc_interface
+      // (and simulates the ADC).  The ADC actually loads the output register
+      // on the negative edge of DRL (after the final conversion of the
+      // decimate block completes), but we don't use DRL, so rely on
+      // worst-case timing.
+      reg [3:0] chan;
+      for (chan = 0; chan < adc_channels; chan = chan + 1) begin
+	 adc_data_reg[chan] <= {chan, 4'hA, adc_count, 4'hB,
+				chan, 4'hC, adc_count, 4'hD};
+      end
+      adc_count <= adc_count + 1;
+   end
+
+   always @(*) begin: outreg
+      reg [3:0] chan;
+      for (chan = 0; chan < adc_channels; chan = chan + 1) begin
+	 adc_sdoa[chan] = adc_data_reg[chan][adc_bits-1];
+      end
+   end
+
+   always @(posedge adc_scka) begin: shifter
+      // Shift out new data on each adc_scka positive edge.  This happens
+      // during the config period also, which is what the chip does.
+      reg [3:0] chan;
+      for (chan = 0; chan < adc_channels; chan = chan + 1) begin
+	 adc_data_reg[chan] <= {adc_data_reg[chan][adc_bits-2:0], 1'bX};
+      end
+   end
+
+   multi_adc_interface the_adc
      (
       .adc_mclk(adc_mclk),
       .adc_scka(adc_scka),
       .adc_sync(adc_sync),
       .adc_sdi(adc_sdi),
-      .adc1_sdoa(adc1_sdoa),
-      .capture_clk(clk),
+      .adc_sdoa(adc_sdoa),
+      .capture_clk(capture_clk),
+      .bus_clk(bus_clk),
       .capture_data(capture_data),
       .capture_en(capture_en),
       .capture_full(capture_full),
@@ -103,4 +162,4 @@ module adc_interface_tb ();
       */
    end
      
-endmodule // adc_interface_tb
+endmodule

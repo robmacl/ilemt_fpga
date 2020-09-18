@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="multi_adc_interface_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="multi_adc_interface_tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="36874843982fs"></ZoomStartTime>
+      <ZoomEndTime time="37315378901fs"></ZoomEndTime>
+      <Cursor1Time time="3154095000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="240"></NameColumnWidth>
+      <ValueColumnWidth column_width="147"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="21" />
+   <wvobject fp_name="/multi_adc_interface_tb/adc_mclk" type="logic">
+      <obj_property name="ElementShortName">adc_mclk</obj_property>
+      <obj_property name="ObjectShortName">adc_mclk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/adc_scka" type="logic">
+      <obj_property name="ElementShortName">adc_scka</obj_property>
+      <obj_property name="ObjectShortName">adc_scka</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/adc_sync" type="logic">
+      <obj_property name="ElementShortName">adc_sync</obj_property>
+      <obj_property name="ObjectShortName">adc_sync</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/adc_sdi" type="logic">
+      <obj_property name="ElementShortName">adc_sdi</obj_property>
+      <obj_property name="ObjectShortName">adc_sdi</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/adc_sdoa" type="array">
+      <obj_property name="ElementShortName">adc_sdoa[11:0]</obj_property>
+      <obj_property name="ObjectShortName">adc_sdoa[11:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/capture_data" type="array">
+      <obj_property name="ElementShortName">capture_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">capture_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/capture_en" type="logic">
+      <obj_property name="ElementShortName">capture_en</obj_property>
+      <obj_property name="ObjectShortName">capture_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/user_r_read_32_open" type="logic">
+      <obj_property name="ElementShortName">user_r_read_32_open</obj_property>
+      <obj_property name="ObjectShortName">user_r_read_32_open</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/config_done" type="logic">
+      <obj_property name="ElementShortName">config_done</obj_property>
+      <obj_property name="ObjectShortName">config_done</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/adc_count" type="array">
+      <obj_property name="ElementShortName">adc_count[3:0]</obj_property>
+      <obj_property name="ObjectShortName">adc_count[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/adc_data_reg" type="array">
+      <obj_property name="ElementShortName">adc_data_reg[11:0][23:0]</obj_property>
+      <obj_property name="ObjectShortName">adc_data_reg[11:0][23:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/capture_count" type="array">
+      <obj_property name="ElementShortName">capture_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">capture_count[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/the_adc/state" type="array">
+      <obj_property name="ElementShortName">state[2:0]</obj_property>
+      <obj_property name="ObjectShortName">state[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/the_adc/is_acquire" type="logic">
+      <obj_property name="ElementShortName">is_acquire</obj_property>
+      <obj_property name="ObjectShortName">is_acquire</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/the_adc/acquire_bit" type="array">
+      <obj_property name="ElementShortName">acquire_bit[4:0]</obj_property>
+      <obj_property name="ObjectShortName">acquire_bit[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/the_adc/decimate_counter" type="array">
+      <obj_property name="ElementShortName">decimate_counter[4:0]</obj_property>
+      <obj_property name="ObjectShortName">decimate_counter[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/the_adc/mode" type="array">
+      <obj_property name="ElementShortName">mode[1:0]</obj_property>
+      <obj_property name="ObjectShortName">mode[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/the_adc/shift_ena" type="logic">
+      <obj_property name="ElementShortName">shift_ena</obj_property>
+      <obj_property name="ObjectShortName">shift_ena</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/the_adc/adc_cycle" type="array">
+      <obj_property name="ElementShortName">adc_cycle[4:0]</obj_property>
+      <obj_property name="ObjectShortName">adc_cycle[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/the_adc/acquire_end" type="logic">
+      <obj_property name="ElementShortName">acquire_end</obj_property>
+      <obj_property name="ObjectShortName">acquire_end</obj_property>
+   </wvobject>
+</wave_config>
