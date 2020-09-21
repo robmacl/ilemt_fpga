@@ -1,5 +1,6 @@
 module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LED1, LED2, LED3, LED4, IN3_CARDSEL, IN2_CARDSEL, IN1_CARDSEL, IN0_CARDSEL, BIST_SYNC, BIST_MOSI, BIST_SCLK, DAC_BCK, DAC_LRCK, DAC_DATA0, DAC_DATA1, DOUTL5, DOUTL6, DFB1_P, DFB1_N, DFB2_P, DFB2_N, DFB3_P, DFB3_N, DFB4_P, DFB4_N, DOUT1_P, DOUT1_N, DOUT2_P, DOUT2_N, DOUT3_P, DOUT3_N, DOUT4_P, DOUT4_N, DOUT5_P, DOUT5_N, DOUT6_P, DOUT6_N, DOUT7_P, DOUT7_N, DOUT8_P, DOUT8_N, ICLK_SYNC, ICLK_SDI, ICLK_MCLK_ENA_P, ICLK_MCLK_ENA_N, SCKB_P, SCKB_N, SCKA_P, SCKA_N, SYSCLK_P, SYSCLK_N, ICLK_DEBUG_P, ICLK_DEBUG_N, IN3_SDOA1_P, IN3_SDOA1_N, IN3_SDOB1_P, IN3_SDOB1_N, IN3_SDOA2_P, IN3_SDOA2_N, IN3_SDOA3_P, IN3_SDOA3_N, IN2_SDOA1_P, IN2_SDOA1_N, IN2_SDOB1_P, IN2_SDOB1_N, IN2_SDOA2_P, IN2_SDOA2_N, IN2_SDOA3_P, IN2_SDOA3_N, IN1_SDOA1_P, IN1_SDOA1_N, IN1_SDOB1_P, IN1_SDOB1_N, IN1_SDOA2_P, IN1_SDOA2_N, IN1_SDOA3_P, IN1_SDOA3_N, IN0_SDOA1_P, IN0_SDOA1_N, IN0_SDOB1_P, IN0_SDOB1_N, IN0_SDOA2_P, IN0_SDOA2_N, IN0_SDOA3_P, IN0_SDOA3_N);
 
+`include "adc_params.v"
    /// Pin definitions:
    
    // debug IOs
@@ -63,7 +64,7 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    output ICLK_SYNC;
    output ICLK_SDI;
    output ICLK_MCLK_ENA_P;
-   output ICLK_MCLK_ENA_N;
+    output ICLK_MCLK_ENA_N;
    output SCKB_P;
    output SCKB_N;
    output SCKA_P;
@@ -154,8 +155,7 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    OBUFDS OBUFDS_SCKB (.O(SCKB_P), .OB(SCKB_N), .I(SCKB));
    wire   SCKA;
    OBUFDS OBUFDS_SCKA (.O(SCKA_P), .OB(SCKA_N), .I(SCKA));
-   wire   SYSCLK;
-   IBUFDS IBUFDS_SYSCLK (.O(SYSCLK), .I(SYSCLK_P), .IB(SYSCLK_N));
+   // SYSCLK receive buffer is integral to PLL, on clock capable pin.
    wire   ICLK_DEBUG;
    OBUFDS OBUFDS_ICLK_DEBUG (.O(ICLK_DEBUG_P), .OB(ICLK_DEBUG_N), .I(ICLK_DEBUG));
    wire   DFB1;
@@ -185,7 +185,16 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
 
    
    /// This section is all Xillybus stuff for the processor interface.
-   /// Some is for features which are not used.
+   // Some is for features which are not used.  This is more-or-less copied
+   // from xillydemo.v.
+   //
+   // More specifically, what we are mostly doing is instantiating the
+   // Xillybus core and defining the names of the signals that go to/from the
+   // core.  In the case of FIFOs, this the Xillybus end of the FIFO. (The
+   // names of the signals on our side of the FIFO are defined elsewhere.)
+   // There are also templates for the (currently unused) Xillybus random
+   // access modes xillybus_mem (which looks like a Unix file) and xillybus
+   // lite, which supports memory mapped registers.
 
    // Clock and quiesce
    wire    bus_clk;
@@ -249,6 +258,7 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    wire        user_irq;
 
 
+   // [Comment from xillydemo.v]
    // Note that none of the ARM processor's direct connections to pads is
    // attached in the instantion below. Normally, they should be connected as
    // toplevel ports here, but that confuses Vivado 2013.4 to think that
@@ -365,53 +375,53 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    assign  user_r_mem_8_eof = 0;
    assign  user_w_mem_8_full = 0;
 
-   // End Xillybus stuff
-
+   // End Xillybus xillydemo.v stuff 
 
 
 /// ILEMT interfaces:
 
-   // ### change to use SYSCLK
+   // capture_clk is to generate the ADC and DAC clocking: adc_scka, adc_mclk,
+   // etc.
+   // 
+   // See adc_params.v for notes on current on current clock configuration,
+   // and also the MMCM/PLL IP configuration wizard.  capture_clk needs to be
+   // phase shifted wrt. SYSCLK to give maximum setup/hold time on the
+   // MCLK_ENA signal.  Ideally this should be phase-tweaked to get that
+   // measured relationship at the MCLK flip-flop.
    //
-   // capture_clk should be SYSCLK shifted by 180 degrees to give maximum
-   // setup/hold time on the MCLK_ENA signal.  Ideally this should be
-   // phase-tweaked to get that measured relationship at the MCLK flip-flop.
-   // This gives 1/2 cycle of lead on all of the ADC signals wrt MCLK, which
-   // is of no great significance except that we have to make sure that we
-   // delay SPI acqusition until conversion is complete even in the presence
-   // of this delay.  For us this forces an increase in the convert_cycles
-   // parameter, which further squeezes the already somewhat tight acqusition
-   // window on the LTC2512-24.
-   //
-   // The output pin clocks adc_scka and adc_mclk are derived from
-   // capture_clk.
+   // The phase shift and reclocking on MCLK_ENA means that MCLK is delayed by
+   // about 1/2 SYSCLK cycle wrt. the signals that come straight from the
+   // FPGA.  This doesn't matter as long as we allow enough time for the
+   // conversion to complete before we go active on the SPI bus.
    // 
    // ### need attention here:
-   // We should constrain at least the leading edges of MCLK and SCKA.  As
+   // We should constrain at least the leading edges of MCLK_ENA and SCKA.  As
    // well as the MCLK phase requirement above, we also need to be confident
    // that there is enough setup time for SDOA from posedge SCKA with the
    // various delays.  See ilemt_fpga/docs/spi_timing_budget.xlsx
    //
-   // I hear it is difficult to constrain both leading and trailing edges such
-   // as might make sense with SPI, but it seems that we don't care about the
-   // trailing edge of SCKA.  This is when we nominally sample SDOA, but the
-   // ADC doesn't do anything with that edge.  And the actual sampling is
-   // driven by posedge capture_clk.
+   // It seems constraining SPI can get ugly in general because SPI uses both
+   // posedge and negedge on SCK, but it is pretty simple for us since we are
+   // master, and use the double rate capture_clk to drive sampling.  (The bad
+   // case seems to be a slave, because SCK is asynchronous and we don't have
+   // the double-rate clock.)  The ADC mostly writes, so only uses negedge
+   // SCKA for the configuration input (which does not exist on the
+   // LTC2512-24).
 
-   // ### should be 51.2 MHz for 1.6 MHz MCLK with adc_cycles=32,
-   // giving 50 ksps, with decimate 32.
    wire capture_clk;
    capture_clk1 capture_clk1_instance
      (
       .clk_out1(capture_clk),
-      .clk_fpga_1(bus_clk)
+      .clk_in1_p(SYSCLK_P),
+      .clk_in1_n(SYSCLK_N)
       );
 
 
-   // Output from ADC to FIFO
+   // Output from ADC to FIFO.  The data format is a left-justified signed
+   // integer.  The low 8 bits are zero with the LTC2512-24.
    wire [31:0] capture_data;
 
-   // ADC FIFO full.  
+   // ADC FIFO full.
    wire        capture_full;
 
    // Bundle all of the ADC inputs into a single word.
@@ -434,11 +444,11 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    // read 32 fifo, fifo_32
    multi_adc_interface the_adc
      (
-      .adc_mclk_ena(ICLK_MCLK_ENA), // ### not right until capture_clk is made synchronous with SYSCLK
+      .adc_mclk(ICLK_MCLK_ENA),
       .adc_scka(SCKA),
       .adc_sync(ICLK_SYNC),
       .adc_sdi(ICLK_SDI),
-      .adc1_sdoa(ADC_SDOA),
+      .adc_sdoa(ADC_SDOA),
       .capture_clk(capture_clk),
       .bus_clk(bus_clk),
       .capture_data(capture_data),
@@ -458,10 +468,12 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    // not doing is that allows us to read data when no output is
    // supplied.
    wire dac_rden, dac_empty;
-   wire [31:0] dac_data;
+
+   // FIFO output word
+   wire [31:0] dac_fifo_data;
    
    assign dac_sck = capture_clk;
-   wire [1:0]  DAC_DATA;
+   wire [1:0] DAC_DATA;
    assign DAC_DATA = {DAC_DATA0, DAC_DATA1};
    multi_dac_interface the_dac
       (
@@ -472,7 +484,7 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
        .bus_clk(bus_clk),
        .dac_open_bus(user_w_write_32_open),
        .dac_rden(dac_rden),
-       .dac_data(dac_data),
+       .dac_fifo_data(dac_fifo_data),
        .dac_empty(dac_empty)
        );
 
@@ -486,7 +498,7 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
       .din(user_w_write_32_data),
       .wr_en(user_w_write_32_wren),
       .rd_en(dac_rden),
-      .dout(dac_data),
+      .dout(dac_fifo_data),
       .full(user_w_write_32_full),
       .empty(dac_empty)
       );

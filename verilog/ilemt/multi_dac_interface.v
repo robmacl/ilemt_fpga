@@ -1,15 +1,14 @@
-// Interface to TI PCM1794A.  Currently we only support single-channel output,
-// with data sent to the left channel.  This will work with the DAC's mono
-// mode, where the two outputs are complementary differential.  We are using
-// I2S data format, 24 bit.
+// Interface to TI PCM1794A.  We implement four output channels using
+// 2 DACs.  We are using I2S data format, 24 bit.
+// ### but this is still the old mono version
 //
 // DAC should be strapped for:
+// ### wrong, need stereo
 //   {MONO, CHSL, FMT1, FMT0} = 4'b1000
 //
 // This selects mono, left channel, I2S, sharp output filter rolloff.
 // 
 module multi_dac_interface
-  // `include "interface_params.v"
   (
    // Hardware pins: SCK system clock is routed directly from capture_clk.
    // RST reset is not available on the off-the-shelf board.
@@ -23,12 +22,12 @@ module multi_dac_interface
 
    // Serial data, MSB first, followed by zero pad data.  In I2S the first
    // posedge on BCK is a dummy bit, see below.
-   output reg 	     dac_data_pin,
+   output reg [1:0] dac_data,
 
    // left/right clock.  The rising and trailing edges of LRCK indicate data
    // should be latched.  This is the actual sample rate clock.  The left data
    // is transferred when LRCK is low, so the left data is *latched* by DAC on
-   // the positive edge.  I imagine that the data is clocked into the channel
+   // the positive edge.  I imagine that the data  is clocked into the channel
    // DACs simultaneously, on the negative edge of LRCK (after the right
    // sample data word is complete).  LRCK transitions on a negative edge of
    // BCK, the last bit period of the sample.  (No actual data is transmitted
@@ -40,8 +39,8 @@ module multi_dac_interface
    // Data acqusition clock.  This is the system clock for the DAC (SCK).
    // Must be one of several permissable multiples of LRCK rate, but is not
    // required to have any particular phase relationship.  For us, this is
-   // used to generate LRCK (and BCK), so is in-phase.  At 48 ksps this is
-   // 24.576 MHz.
+   // used to generate LRCK (and BCK), so is in-phase.  See adc_params.v for
+   // discussion of clocking.
    input wire 	     capture_clk,
 
    // Processor 100 MHz clock, maybe needed for synchronization?
@@ -57,7 +56,7 @@ module multi_dac_interface
 
    // FIFO interface
    output reg 	     dac_rden,
-   input wire [31:0] dac_data,
+   input wire [31:0] dac_fifo_data,
    input wire 	     dac_empty
    );
 
@@ -115,7 +114,7 @@ module multi_dac_interface
 
 	    // Truncate the sample from 32 bits down to 24.  Add I2S start pad
 	    // bit.
-	    dac_shifter <= {1'b0, dac_data[31:8]};
+	    dac_shifter <= {1'b0, dac_fifo_data[31:8]};
 
 	    // Read FIFO now so data is ready when we next want it.  We handle
 	    // FIFO empty by ignoring it.  According to FIFO doc it is OK to
@@ -143,7 +142,7 @@ module multi_dac_interface
 
       // These guys just always keep rolling.
       dac_bck <= lrck_counter[0];
-      dac_data_pin <= dac_shifter[24];
+      dac_data[0] <= dac_shifter[24];
    end
 
    

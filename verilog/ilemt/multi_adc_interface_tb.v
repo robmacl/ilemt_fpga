@@ -10,24 +10,31 @@ module multi_adc_interface_tb ();
    reg [adc_channels-1:0] adc_sdoa = 0; // in
    
    // clocks
-   parameter period = 19.53; 
    reg capture_clk = 0;
    initial begin
-      forever capture_clk = #(period / 2) ~capture_clk;
+      forever capture_clk = #(capture_clk_period / 2) ~capture_clk;
    end
 
-   parameter bus_period = 10;
    reg bus_clk = 0;
    initial begin
-      forever bus_clk = #(bus_period / 2) ~bus_clk;
+      forever bus_clk = #(bus_clk_period / 2) ~bus_clk;
    end
 
    reg user_r_read_32_open = 0; // in from Xillybus
 
    initial begin
-      #(100*period)
+      if (convert_cycles + 2 + 2*acquire_nbits > adc_cycles) begin
+	 $display("Not enough time in adc_cycle for acqusition.");
+	 $stop;
+      end
+      if (adc_decimate * acquire_nbits < adc_bits) begin
+	 $display("Not enough bits acquired during decimate cycle.");
+	 $stop;
+      end
+	 
+      #(100*capture_clk_period)
 	user_r_read_32_open = 1;
-      #(4*adc_decimate*adc_cycles*period);
+      #(4*adc_decimate*adc_cycles*capture_clk_period);
       $stop;
    end
 

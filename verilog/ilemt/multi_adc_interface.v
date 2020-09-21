@@ -235,11 +235,15 @@ module multi_adc_interface
 	 end
 	 else begin
 	    decimate_counter <= decimate_counter - 1;
-	    mode <= mode;
+	    if (fifo_load_ena)
+	      // fifo_load_ena can happen on a start cycle if there are no
+	      // wait cycles (we go directly from acquire to start).  In this
+	      // case we need to both decrement decimate and go into
+	      // wait_mode.
+	      mode <= wait_mode;
 	 end
       end
       else begin
-	 decimate_counter <= decimate_counter;
 	 if (fifo_load_ena)
 	   // If we have read full word, enter wait_mode
 	   mode <= wait_mode;
@@ -247,8 +251,6 @@ module multi_adc_interface
 	   // exit sync_mode once we hit the first acquire.  We hold it that
 	   // long so that we can suppress the first SCKA pulse.
 	   mode <= acquire_mode;
-	 else
-	   mode <= mode;
       end
    end
 
@@ -310,7 +312,9 @@ module multi_adc_interface
    
    // Datapaths for acquire_bit and fifo_load_ena.
    always @(posedge capture_clk) begin
-      if (is_reset) begin
+      if (is_reset || decimate_counter == 0) begin
+	 // Resetting from decimate_counter makes sure that acquire_bit stays
+	 // in synch with decimate_counter.
 	 acquire_bit <= adc_bits - 1;
 	 fifo_load_ena <= 0;
       end

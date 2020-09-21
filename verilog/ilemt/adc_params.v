@@ -1,44 +1,68 @@
 // Parameters related to ADC input, see multi_adc_interface.v  These values
 // are for the LTC2512-24 with the ILEMT main board.
 
-// The number of capture_clk cycles per MCLK conversion, giving total
-// convert/acquire cycle corresponding to 1.6 MHz MCLK rate (625 ns).  This
-// must be even because the SPI bus runs at half rate.  This implies
-// capture_clk is 51.2 MHz.
-//
-// ### Huh, why am I using such a high capture_clk/SCKA?  It could be half
-// this fast and still acquire all of the data.  This would make the SPI SDOA
-// setup much more relaxed.  Just need to reduce both the clock frequency and
-// the XXX_cycles values.  IIRC, one issue is the DAC timing, which only
-// supports certain power-of-two clock multipliers.  This is a constraint if
-// the ADC clock is the same as capture_clk.
-//
-// Don't confuse adc_cycles with adc_decimate, which further divides the
-// output rate.
-parameter adc_cycles = 32;
-
-// The number of capture_clk cycles to wait while the MCLK conversion
-// completes.  This must be even.  LTC2512-24 datasheet max is 460 ns (which
-// is a min for us).  24 = 469 ns with 51.2 MHz capture_clk, but the actual
-// MCLK with the ILEMT main board is delayed by reclocking, so we increase to
-// 26.  capture_clk should be 180 degrees wrt sysclk to give maximum timing
-// slack on the reclocking, giving an expected delay of 9.8 ns, which makes
-// convert_cycles=24 just barely too short.  This leaves only 6 cycles for
-// acqusition, which would just permit acquire_bits=2, but we go with 1
-// because there is plenty of time for acqusition even at that rate with
-// adc_decimate=32. 
+// adc_cycles: the number of capture_clk cycles per MCLK conversion, giving
+// total convert/acquire cycle at (or below) a 1.6 MHz MCLK rate (625 ns).
+// 
+// convert_cycles: the number of capture_clk cycles we allow for worst-case
+// ADC conversion time.  These must be even because the SPI bus runs at half
+// rate.
 //
 // (The ADC SAR converter clock is generated internally to the ADC, so is
 // asynchronous wrt. capture_clk, and is not tightly frequency controlled.
-// Hence the vagueness in the conversion time.  The BUSY signal tells you
-// when the conversion is actually in progress, but we want to operate all
-// of the ADCs synchronously, so we use a worst-case timing.)
-parameter convert_cycles = 26;
+// Hence the vagueness in the conversion time.  The internal SAR clock is not
+// jitter critical because it is synchronized on each sample by MCLK. The BUSY
+// signal (which we did not bring out) tells you when the conversion is
+// actually in progress, but we want to operate all of the ADCs synchronously,
+// so we use a worst-case timing.)
+//
+// ### I was planning for capture_clk to be identical to SYSCLK, but I don't
+// want to figure out how to program the oscillator now, so I'm going to leave
+// it at 100 MHz and use a PLL to derive a 20 MHz capture_clk.  It needs to
+// have an integer ratio to give a fixed edge-to-edge timing of SYSCLK to
+// capture_clk in order for the MCLK synchronization to work.  See the PLL IP
+// configuration for the capture_clk generation.
+//
+// 20 MHz capture_clk with adc_cycles=16 gives us an output sample rate of
+// 39.06 ksps, which is kind of random, but we can use whatever rate we want.
+// This is a MCLK rate of 1.25 MHz.  And convert_cycles=12 gives a convert
+// window of 600 ns.  This gives us a 10 MHz SPI clock and relaxed SPI setup
+// timing.
+//
+// The 600 ns convert window gives us 140 ns over the 460 ns max conversion
+// time spec, more than enough to allow for the synchronization delay in the
+// MCLK flip-flop.  At the 100 MHz clock the synchronization delay is only 5
+// ns, but this makes the MCLK FF setup critical.  We might need to tweak the
+// capture_clk phase shift to get good setup time on MCLK_ENA.  We have
+// freedom here because nothing else is constraining the capture_clk/SYSCLK
+// phase relationship.
+//
+// For the SPI setup, our max delay from SCKA back to SDOA is about 20 ns,
+// whereas 1/2 clock at 10 MHz gives us 50 ns, so there is really no problem
+// ensuring enough setup time.  This would be the case even with the 25.4 MHz
+// clock corresponding to full ADC rate, but the convert_cycles starts to
+// become a concern.  Having a multiplied SYSCLK does greatly reduce the MCLK
+// synchronization delay, though.  With programmed clock we might want to try
+// a divisor of 4.  I guess we could squeak through with this even with 100
+// MHz sysclk (which may be forced by the DAC supported divisors.
+//
+// Note that there is no ADC jitter penalty for interposing the PLL in the
+// capture_clk path because of the external MCLK synchronization.  This would
+// be a factor for the DACs if we don't do external synch there.  I am not
+// certain which DAC clock is jitter critical, but it is probably the high
+// rate SCK.
+//
+// Don't confuse adc_cycles with adc_decimate, which further divides the
+// output rate.
+// 
+parameter adc_cycles = 16;
+parameter convert_cycles = 12;
 
 // Total bits we acquire (ADC output word size).
 parameter adc_bits = 24;
 
-// Number of output bits to acquire each MCLK cycle.
+// Number of output bits to acquire each MCLK cycle.  With current timing this
+// has to be 1 because the conversion takes up most of the MCLK cycle.
 parameter acquire_nbits = 1;
 
 // Decimation factor configured in the ADC output filter.  We need this to
@@ -55,3 +79,8 @@ parameter adc_config = 12'b10_00_0100_0110;
 
 // The number of ADC channels to acquire (card slots * 3)
 parameter adc_channels = 12;
+
+// Clock periods in ns, used in testbenches.
+//parameter capture_clk_period = 19.53;
+parameter capture_clk_period = 39.06;
+parameter bus_clk_period = 10;

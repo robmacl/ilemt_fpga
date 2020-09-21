@@ -11,13 +11,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="36874843982fs"></ZoomStartTime>
-      <ZoomEndTime time="37315378901fs"></ZoomEndTime>
-      <Cursor1Time time="3154095000fs"></Cursor1Time>
+      <ZoomStartTime time="23697307000fs"></ZoomStartTime>
+      <ZoomEndTime time="27557307000fs"></ZoomEndTime>
+      <Cursor1Time time="26502210000fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="240"></NameColumnWidth>
-      <ValueColumnWidth column_width="147"></ValueColumnWidth>
+      <ValueColumnWidth column_width="141"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="21" />
    <wvobject fp_name="/multi_adc_interface_tb/adc_mclk" type="logic">
@@ -51,10 +51,6 @@
    <wvobject fp_name="/multi_adc_interface_tb/user_r_read_32_open" type="logic">
       <obj_property name="ElementShortName">user_r_read_32_open</obj_property>
       <obj_property name="ObjectShortName">user_r_read_32_open</obj_property>
-   </wvobject>
-   <wvobject fp_name="/multi_adc_interface_tb/clk" type="logic">
-      <obj_property name="ElementShortName">clk</obj_property>
-      <obj_property name="ObjectShortName">clk</obj_property>
    </wvobject>
    <wvobject fp_name="/multi_adc_interface_tb/config_done" type="logic">
       <obj_property name="ElementShortName">config_done</obj_property>
@@ -105,5 +101,9 @@
    <wvobject fp_name="/multi_adc_interface_tb/the_adc/acquire_end" type="logic">
       <obj_property name="ElementShortName">acquire_end</obj_property>
       <obj_property name="ObjectShortName">acquire_end</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_adc_interface_tb/the_adc/fifo_load_ena" type="logic">
+      <obj_property name="ElementShortName">fifo_load_ena</obj_property>
+      <obj_property name="ObjectShortName">fifo_load_ena</obj_property>
    </wvobject>
 </wave_config>
