@@ -424,8 +424,9 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    // ADC FIFO full.
    wire        capture_full;
 
-   // Bundle all of the ADC inputs into a single word.
-   wire [adc_channels-1:0] ADC_SDOA;
+   // Bundle all of the ADC inputs into a single word.  Note that bit index 0
+   // is the MS bit (but also the zero'th input).
+   wire [0:adc_channels-1] ADC_SDOA;
    assign ADC_SDOA
      = {IN0_SDOA1,
 	IN0_SDOA2,

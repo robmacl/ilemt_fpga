@@ -50,9 +50,9 @@ module multi_adc_interface
    // falling edge of MCLK should occur within 40ns from the start of the
    // conversion, or after the conversion has been completed."  We clear MCLK
    // after the conversion should be done (according to conversion time spec).
-   output reg 	     adc_mclk,
+   output reg 		adc_mclk,
    // SPI SCK for data ouput
-   output reg 	     adc_scka,
+   output reg 		adc_scka,
 
    // SYNC pulse to synchronize the phase of internal digital filter with the
    // output interface.  This is necessary even when there is only one ADC so
@@ -60,13 +60,13 @@ module multi_adc_interface
    // every DF conversions after SYNC. This is basically a reset, but SYNC
    // which is consistent with existing phase does no harm.  An additional
    // function is to enable filter programming via SDI.
-   output reg 	     adc_sync,
+   output reg 		adc_sync,
    // SPI SDI on ADCs, used to configure.
-   output reg 	     adc_sdi,
+   output reg 		adc_sdi,
 
    // SPI SDO for decimated output on each ADC.  The first ADC (IN0_SDOA1) is
-   // in bit 11.
-   input [11:0]      adc_sdoa,
+   // in bit 0, the MS bit.
+   input [0:adc_channels-1] adc_sdoa,
 
    // capture_clk is the clock for the acquisition process. Frequency may be
    // synthesized to get a particular data rate, or be derived from an
@@ -77,7 +77,7 @@ module multi_adc_interface
    // The SPI clock is 1/2 this.  We keep a modest 16 MHz SPI clock rate and
    // use "distributed read", where we clock out only a few bits for every
    // conversion cycle.  See adc_cycles parameter.
-   input 	     capture_clk,
+   input 		capture_clk,
 
    
    /// Xillybus interface stuff:
@@ -85,37 +85,47 @@ module multi_adc_interface
    // Xillybus clock, which is the 100 MHz FPGA clock.  We use this to
    // synchronize some handshaking signals that go directly to the
    // Xillybus core (rather than through the FIFO).
-   input wire 	     bus_clk,
+   input wire 		bus_clk,
   
    // We are supplying data to the user_r_read_32 FIFO.  These are attached to
    // FIFO write port (capture_clk domain).  Data is transferred from our
    // adc_register() FIFO chain on every cycle when it is available.  When
    // adc_bits is less than 32 then the result is left justified so that the
    // MSB is still in bit 31.
-   output reg [31:0] capture_data,
-   output wire 	     capture_en,
-   input wire 	     capture_full,
+   output reg [31:0] 	capture_data,
+   output reg 		capture_en,
+   input wire 		capture_full,
 
    // user_r_read signals are bus_clk domain.
    // FIFO empty 
-   input wire 	     user_r_read_32_empty, 
+   input wire 		user_r_read_32_empty, 
    // Is the read fifo open?
-   input wire 	     user_r_read_32_open,
-   // Asserted to force EOF condition on FIFO overrun.  The way this
-   // is set up this stays asserted until the file is closed and
-   // reopened.
-   //
-   // ### We don't actually do this, since we are using ncp, and don't
-   // want to drop the connection when there is an overrun.
-   output wire 	     user_r_read_32_eof
+   input wire 		user_r_read_32_open,
+   // Asserted to force EOF condition output pipe.  We do not used this.
+   output wire 		user_r_read_32_eof
   );
 
 `include "adc_params.v"
-   
+
+
+/// Xillybus stuff:
+
+   // Clock crossing logic: bus_clk -> capture_clk
+   (* ASYNC_REG = "TRUE" *) reg capture_open = 0;
+   (* ASYNC_REG = "TRUE" *) reg capture_open_cross = 0;
+   always @(posedge capture_clk)
+     begin
+	capture_open_cross <= user_r_read_32_open;
+	capture_open <= capture_open_cross;
+     end
+
+
+/// State machine:
+
    // Our acquire state machine is held in reset whenever the output file is
    // closed.  This mainly serves to give a clean state on start of
    // acquisition. (FWIW also saves power by keeping the ADC in shutdown.)
-   wire external_reset;
+   wire external_reset = ~capture_open;
 
    // Acquire state machine states. See state machine implementation below. 
    parameter
@@ -256,24 +266,31 @@ module multi_adc_interface
 
    // This is an array of the connections between the stages in the buffer
    // FIFO chain.  The word ready for output appears at fifo_data[0], while
-   // fifo_data[adc_channels] is forced to zero (so that the FIFO fills with
+   // fifo_data[acquire_adc_channels] is forced to zero (so that the FIFO fills with
    // zeros as we clock out the words).  Bit fifo_data[0][adc_bits] is a valid
    // flag which indicates data is available (and must be transferred on this
    // capture_clk cycle or it will be lost).
-   wire [adc_bits:0] fifo_data [0:adc_channels];
-   assign fifo_data[adc_channels] = 0;
-   wire capture_data_ready = fifo_data[0][adc_bits];
+   wire [adc_bits:0] fifo_data [0:acquire_adc_channels];
+   assign fifo_data[acquire_adc_channels] = 0;
 
+   // Set up the outputs to the FIFO.  We introduce capture_data and
+   // capture_en as an extra stage of registers to get a clean synchronous
+   // output.
    parameter [31:0] zero_pad = 0;
-
+   // This generate is just a clue to constant fold the adc_bits test and
+   // padding.  These days it is an optional decoration.
    generate
-      always @(*) begin
+      always @(posedge capture_clk) begin
 	 // Zero pad on right if not 32 bit ADC
 	 if (adc_bits == 32)
-	   capture_data = fifo_data[0][adc_bits-1:0];
+	   capture_data <= fifo_data[0][adc_bits-1:0];
 	 else
-	   capture_data = {fifo_data[0][adc_bits-1:0],
+	   capture_data <= {fifo_data[0][adc_bits-1:0],
 			   zero_pad[(32 - adc_bits - 1):0]};
+
+	 // Strobe to enable FIFO write.  We drop input data when the FIFO
+	 // is full or the pipe is not open.
+	 capture_en <= capture_open && !capture_full && fifo_data[0][adc_bits];
       end
    endgenerate
 
@@ -295,10 +312,14 @@ module multi_adc_interface
    // that is isn't there.xs
    wire shift_ena = (adc_scka || adc_sync);
 
-   // Datapaths for ADC data (adc_register) 
+   // Datapaths for ADC data (adc_register), which shift in serial data from
+   // each ADC and then feed it out in parallel.
    genvar chan;
    generate
-      for (chan = 0; chan < adc_channels ; chan = chan + 1) begin
+      // The fifo chain linkage defines what order we output to the external
+      // FIFO.  We want channel 0 (IN0_SDOA1) first, and to shift down toward
+      // channel 0.
+      for (chan = 0; chan < acquire_adc_channels ; chan = chan + 1) begin
 	 adc_register adc_inst (.clock(capture_clk),
 				.reset(is_reset),
 				.in_bit(adc_sdoa[chan]),
@@ -513,26 +534,7 @@ module multi_adc_interface
    end
 
    
-   /// Xillybus stuff:
-   
-   // Clock crossing logic: bus_clk -> capture_clk
-   (* ASYNC_REG = "TRUE" *) reg capture_open = 0;
-   (* ASYNC_REG = "TRUE" *) reg capture_open_cross = 0;
-   always @(posedge capture_clk)
-     begin
-	capture_open_cross <= user_r_read_32_open;
-	capture_open <= capture_open_cross;
-     end
-
-   assign external_reset = ~capture_open;
-
-
-   // Strobe to enable FIFO write.  We drop input data when the FIFO
-   // is full or the pipe is not open.
-   // 
-   // Note: put back in "&& !capture_has_been_full" for overrun eof
-   // feature below.
-   assign capture_en = capture_open && !capture_full && capture_data_ready;
+   /// More Xillybus stuff:
 
    /*
    reg 	       capture_has_been_full;

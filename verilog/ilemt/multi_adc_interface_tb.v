@@ -7,7 +7,7 @@ module multi_adc_interface_tb ();
 	adc_sync, // out 
 	adc_sdi; // out
 
-   reg [adc_channels-1:0] adc_sdoa = 0; // in
+   reg [0:adc_channels-1] adc_sdoa = 0; // in
    
    // clocks
    reg capture_clk = 0;
@@ -107,7 +107,7 @@ module multi_adc_interface_tb ();
    reg [3:0] adc_count = 1;
 
    // ADC output registers
-   reg [adc_bits-1:0] adc_data_reg [adc_channels-1:0];
+   reg [adc_bits-1:0] adc_data_reg [0:adc_channels-1];
 
    always @(posedge adc_sync) begin: load
       // Load new simulated data in output register when we have finished
