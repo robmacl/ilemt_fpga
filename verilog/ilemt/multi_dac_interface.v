@@ -1,74 +1,87 @@
-// Interface to TI PCM1794A.  We implement four output channels using
-// 2 DACs.  We are using I2S data format, 24 bit.
-// ### but this is still the old mono version
+// Interface to TI PCM1794A on the ILEMT DAC board.  We implement four output
+// channels using 2 dual channel DACs.  We are using I2S data format, 24 bit.
+// Our input dac_buffer 32 bit, but we discard the low 8 bits.
 //
-// DAC should be strapped for:
-// ### wrong, need stereo
-//   {MONO, CHSL, FMT1, FMT0} = 4'b1000
+// The DAC sample rate has to be the same as the ADC (decimated) sample rate,
+// and the DAC board derives its clean system clock (SCK) by a hardware divide
+// by 4 from the system master clock (SYSCLK on main board).  This forces
+// various decisions related to clocking, see below and in adc_params.v.
 //
-// This selects mono, left channel, I2S, sharp output filter rolloff.
-// 
+// The DAC board pin straps these configuration flags: 
+//   {MONO, CHSL, FMT1, FMT0} = 4'b0000
+//
+// This selects stereo, I2S, sharp output filter rolloff.
+//
+// ### implement reset control.  Should add delay after reset.
 module multi_dac_interface
   (
-   // Hardware pins: SCK system clock is routed directly from capture_clk.
-   // RST reset is not available on the off-the-shelf board.
+   // Data acqusition clock.  This is the same frequency as the DAC SCK,
+   // SYSCLK/4, but there is no particular phase relationship because the DAC
+   // board has its own hardware divider.  See adc_params.v for discussion of
+   // clocking.
+   input wire 		      capture_clk,
 
-   // Serial data bit clock.  Data is clocked in on the rising edge of BCK.
+   // Is this DAC enabled?  We hold ourselves in reset when not enabled.
+   input wire 		      enable;
+
+   // The four current output samples (one per channel) that we are to write.
+   input wire [31:0] 	      dac_buffer [0:dac_channels-1];
+
+   // Request new data from dac_buffer_reg()
+   output reg 		      dac_request;
+
+   
+   /// IO pins used for DAC interface (all are outputs):
+
+   // Serial data bit clock.  The DAC clocks data on the rising edge of BCK.
    // Frequency is half of capture_clk.  We run BCK continuously (when we are
-   // not in reset), sending zero pad data if we have finished the actual
+   // not in reset), sending zero pad data when we have finished the actual
    // data.  There are many excess bit periods in every LRCK window (see
    // lrck_divisor below).
-   output reg 	     dac_bck,
+   output reg 		      dac_bck,
 
-   // Serial data, MSB first, followed by zero pad data.  In I2S the first
-   // posedge on BCK is a dummy bit, see below.
-   output reg [1:0] dac_data,
+   // Serial data pins for the two DACs.  The left and right channels are
+   // interleaved, giving the four output channels.  Serial data is MSB first,
+   // followed by zero pad data.  In I2S the first posedge on BCK is a dummy
+   // bit, see below.
+   output reg [dac_chips-1:0] dac_data_pins,
 
-   // left/right clock.  The rising and trailing edges of LRCK indicate data
-   // should be latched.  This is the actual sample rate clock.  The left data
-   // is transferred when LRCK is low, so the left data is *latched* by DAC on
-   // the positive edge.  I imagine that the data  is clocked into the channel
-   // DACs simultaneously, on the negative edge of LRCK (after the right
-   // sample data word is complete).  LRCK transitions on a negative edge of
-   // BCK, the last bit period of the sample.  (No actual data is transmitted
-   // in this last bit period because in I2S the data is at the beginning of
-   // the LR window, left justified.)  The full sample period is left then
-   // right, so the first LRCK phase is low.
-   output reg 	     dac_lrck,
+   // The Left/Right Clock pin.  The rising and trailing edges of LRCK tell
+   // the DAC when to latch data.  The left data is transferred when
+   // LRCK is low, so the left data is *latched* by DAC on the positive edge.
+   // I imagine that the data is clocked into the channel DACs simultaneously,
+   // on the negative edge of LRCK (after the right sample data word is
+   // complete).  LRCK transitions on a negative edge of BCK, the last bit
+   // period of the sample.  (No actual data is transmitted in this last bit
+   // period because in I2S the data is at the beginning of the LR window,
+   // left justified.)  The full sample period is left channel then right, so
+   // the first LRCK phase is low.
+   // 
+   // [The LRCK rate is how the DAC learns what the sample rate is, but I am
+   // operating under the assumption that the actual sample clock is the
+   // system clock SCK.  It has logic to figure out which of several clock
+   // divisors are being used.]
+   output reg 		      dac_lrck,
 
-   // Data acqusition clock.  This is the system clock for the DAC (SCK).
-   // Must be one of several permissable multiples of LRCK rate, but is not
-   // required to have any particular phase relationship.  For us, this is
-   // used to generate LRCK (and BCK), so is in-phase.  See adc_params.v for
-   // discussion of clocking.
-   input wire 	     capture_clk,
-
-   // Processor 100 MHz clock, maybe needed for synchronization?
-   input wire 	     bus_clk,
-
-   // ### currently we just always output continuously, regardless of
-   // whether there is any new data available or not.  We ignore
-   // dac_empty (whether there is data in the FIFO), but hold this
-   // module in reset when the DAC pipe is not open.
-
-   // Input from Xillybus, true if the DAC pipe is open (bus_clk domain).
-   input wire 	     dac_open_bus,
-
-   // FIFO interface
-   output reg 	     dac_rden,
-   input wire [31:0] dac_fifo_data,
-   input wire 	     dac_empty
+   // Reset signal, output pin to DACs (negated).
+   output reg 		      dac_not_rst,
    );
 
-   // True when DAC data pipe is not open.
-   wire 	     reset;
+`include "adc_params.v"
+
+   // The number of DAC chips.  This is used for documentation, you can't just
+   // go and change this parameter without other changes.
+   parameter dac_chips = 2;
    
-   // Output shifter. Data goes out MSB first, so gets shifted left, shifting
-   // in zeros.  When all the data has been sent we keep shifting in and
-   // sending zeros.  Data is loaded in [23:0], with bit 24 zero.  Bit 24 is
-   // the dummy bit at the beginning each L/R word in I2S format.
-   reg [24:0] 	     dac_shifter = 0;
-	     
+   // We reset if we are not enabled.
+   wire reset = ~enable;
+   
+   // Output shifters.  Data goes out MSB first, so gets shifted left,
+   // shifting in zeros.  When all the data has been sent we keep shifting in
+   // and sending zeros.  Data is loaded in [23:0], with bit 24 zero.  Bit 24
+   // is the dummy bit at the beginning each L/R word in I2S format.
+   reg [24:0] dac_shifter [0:dac_chips-1];
+   
    // How many capture_clk (SCK) cycles for each output sample. Only certain
    // values are supported by DAC (they are all even).  The DAC automatically
    // figures out which divisor you are using.
@@ -78,18 +91,24 @@ module multi_dac_interface
    // enough clocks for the ADC.  We only need 2 channels * 25 bits (with
    // dummy) * 2 SCK/BCK, or 100.  We don't explicitly count pad bits, but if
    // I reckon correctly there are 103 zero pad bits after each 24+1 bit L/R
-   // data word.
+   // data word.  See adc_params.v
    parameter lrck_divisor = 512;
 
-   // Where we are in the LRCK cycle.
-   reg [9:0] 	     lrck_counter = 0;
+   // Counts down by capture_clk cycles in order to time the LRCK half-cycles.
+   // We generate a LRCK edge when this hits 0.
+   reg [9:0] lrck_counter = 0;
 
    always @(posedge capture_clk) begin
       if (reset) begin
-	 // Like we were in right word so that we treat first cycle as left.
+	 dac_bck <= 0;
+	 dac_data_pins <= 0;
+	 
+	 // Initialize like we were in a right word so that we treat first
+	 // cycle as left.
 	 dac_lrck <= 1; 
-	 dac_rden <= 0;
 	 lrck_counter <= 0;
+
+	 dac_request <= 0;
       end
       else if (lrck_counter == 0) begin
 	 // lrck_counter == 0 means that the new BCK will be negative on this
@@ -97,9 +116,10 @@ module multi_dac_interface
 	 // DATA) always transition on a negative BCK edge (even
 	 // lrck_counter).
 	 
-	 // -1 because we count 255 down to 0.  Note also that this maintains
-	 // the BCK phase, since an odd cycle has to follow an even one
-	 // (zero).
+	 // -1 because we count 255 down to 0.  /2 because we are timing LRCK
+	 // half-cycles.  Another way to see the need for -1 is that BCK is
+	 // generated from the LRCK LSB, and an odd cycle has to follow an
+	 // even one (zero) in order for BCK to be continuous.
 	 lrck_counter <= (lrck_divisor / 2) - 1;
 	 
 	 // LRCK should transition on a negative edge of BCK.  Since counter
@@ -110,55 +130,40 @@ module multi_dac_interface
 
 	 if (dac_lrck) begin
 	    // LRCK is high, so we are ending a right period (and beginning a
-	    // left, moving to the next sample).  Set up new output data.
+	    // left, moving to the next sample).  Set up new output data.  We
+	    // are writing both left words, which is channels 0 and 2.
 
-	    // Truncate the sample from 32 bits down to 24.  Add I2S start pad
-	    // bit.
-	    dac_shifter <= {1'b0, dac_fifo_data[31:8]};
+	    // The shifters truncate the sample from 32 bits down to 24 and
+	    // include the I2S start pad bit.
+	    dac_shifter[0] <= {1'b0, dac_buffer[0][31:8]};
+	    dac_shifter[1] <= {1'b0, dac_buffer[2][31:8]};
 
-	    // Read FIFO now so data is ready when we next want it.  We handle
-	    // FIFO empty by ignoring it.  According to FIFO doc it is OK to
-	    // read when there is no data, and this is a NOOP.  So I expect
-	    // this will keep clocking out the last sample over and over (or
-	    // whatever the initial dac_data contents are).
-	    dac_rden <= 1;
+	    // Request new output data from the buffer so it data is ready
+	    // when we next want it.
+	    dac_request <= 1;
 	 end
 	 else begin
-	    // If we are in a left period (so are beginning a right) then we
-	    // don't do anything, just leave zeros in the dac_shifter.
-	    // ### right channel support goes here
-	    dac_rden <= 0;
+	    // We are in a left period (so are beginning a right).  Load
+	    // shifters with the right-channel data, channels 1 and 3.
+	    dac_shifter[0] <= {1'b0, dac_buffer[1][31:8]};
+	    dac_shifter[1] <= {1'b0, dac_buffer[3][31:8]};
+	    dac_request <= 0;
 	 end
       end
       else begin
-	 dac_rden <= 0;
+	 dac_request <= 0;
 	 
 	 lrck_counter <= lrck_counter - 1;
-	 if (lrck_counter[0])
+	 if (lrck_counter[0]) begin
 	    // New data is shifted out on negative edge of BCK.  Counter is
 	    // odd now, so new BCK is low (negative edge).
-	   dac_shifter <= {dac_shifter[23:0], 1'b0};
+	    dac_shifter[0] <= {dac_shifter[0][23:0], 1'b0};
+	    dac_shifter[1] <= {dac_shifter[1][23:0], 1'b0};
       end
 
-      // These guys just always keep rolling.
+      // These guys just always keep rolling (when we are not in reset).
       dac_bck <= lrck_counter[0];
-      dac_data[0] <= dac_shifter[24];
+      dac_data_pins <= {dac_shifter[0][24], dac_shifter[1][24]};
    end
-
-   
-   /// Xillybus stuff:
-
-
-   // Clock crossing logic: bus_clk -> capture_clk
-   (* ASYNC_REG = "TRUE" *) reg dac_open = 0;
-   (* ASYNC_REG = "TRUE" *) reg dac_open_cross = 0;
-   always @(posedge capture_clk)
-     begin
-	dac_open_cross <= dac_open_bus;
-	dac_open <= dac_open_cross;
-     end
-
-   // We hold the DAC interface in reset when the DAC pipe is not open.
-   assign reset = ~dac_open;
 
 endmodule

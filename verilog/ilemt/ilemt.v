@@ -1,4 +1,4 @@
-module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LED1, LED2, LED3, LED4, IN3_CARDSEL, IN2_CARDSEL, IN1_CARDSEL, IN0_CARDSEL, BIST_SYNC, BIST_MOSI, BIST_SCLK, DAC_BCK, DAC_LRCK, DAC_DATA0, DAC_DATA1, DOUTL5, DOUTL6, DFB1_P, DFB1_N, DFB2_P, DFB2_N, DFB3_P, DFB3_N, DFB4_P, DFB4_N, DOUT1_P, DOUT1_N, DOUT2_P, DOUT2_N, DOUT3_P, DOUT3_N, DOUT4_P, DOUT4_N, DOUT5_P, DOUT5_N, DOUT6_P, DOUT6_N, DOUT7_P, DOUT7_N, DOUT8_P, DOUT8_N, ICLK_SYNC, ICLK_SDI, ICLK_MCLK_ENA_P, ICLK_MCLK_ENA_N, SCKB_P, SCKB_N, SCKA_P, SCKA_N, SYSCLK_P, SYSCLK_N, ICLK_DEBUG_P, ICLK_DEBUG_N, IN3_SDOA1_P, IN3_SDOA1_N, IN3_SDOB1_P, IN3_SDOB1_N, IN3_SDOA2_P, IN3_SDOA2_N, IN3_SDOA3_P, IN3_SDOA3_N, IN2_SDOA1_P, IN2_SDOA1_N, IN2_SDOB1_P, IN2_SDOB1_N, IN2_SDOA2_P, IN2_SDOA2_N, IN2_SDOA3_P, IN2_SDOA3_N, IN1_SDOA1_P, IN1_SDOA1_N, IN1_SDOB1_P, IN1_SDOB1_N, IN1_SDOA2_P, IN1_SDOA2_N, IN1_SDOA3_P, IN1_SDOA3_N, IN0_SDOA1_P, IN0_SDOA1_N, IN0_SDOB1_P, IN0_SDOB1_N, IN0_SDOA2_P, IN0_SDOA2_N, IN0_SDOA3_P, IN0_SDOA3_N);
+module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LED1, LED2, LED3, LED4, IN3_CARDSEL, IN2_CARDSEL, IN1_CARDSEL, IN0_CARDSEL, BIST_SYNC, BIST_MOSI, BIST_SCLK, DAC_NOT_RST, DAC_LRCK, DOUTL3, DOUTL4, DOUTL5, DOUTL6, DFB1_P, DFB1_N, DFB2_P, DFB2_N, DFB3_P, DFB3_N, DFB4_P, DFB4_N, DAC_BCK_P, DAC_BCK_N, DAC_DATA1_P, DAC_DATA1_N, DAC_DATA2_P, DAC_DATA2_N, DOUT4_P, DOUT4_N, DOUT5_P, DOUT5_N, DOUT6_P, DOUT6_N, DOUT7_P, DOUT7_N, DOUT8_P, DOUT8_N, ICLK_SYNC, ICLK_SDI, ICLK_MCLK_ENA_P, ICLK_MCLK_ENA_N, SCKB_P, SCKB_N, SCKA_P, SCKA_N, SYSCLK_P, SYSCLK_N, ICLK_DEBUG_P, ICLK_DEBUG_N, IN3_SDOA1_P, IN3_SDOA1_N, IN3_SDOB1_P, IN3_SDOB1_N, IN3_SDOA2_P, IN3_SDOA2_N, IN3_SDOA3_P, IN3_SDOA3_N, IN2_SDOA1_P, IN2_SDOA1_N, IN2_SDOB1_P, IN2_SDOB1_N, IN2_SDOA2_P, IN2_SDOA2_N, IN2_SDOA3_P, IN2_SDOA3_N, IN1_SDOA1_P, IN1_SDOA1_N, IN1_SDOB1_P, IN1_SDOB1_N, IN1_SDOA2_P, IN1_SDOA2_N, IN1_SDOA3_P, IN1_SDOA3_N, IN0_SDOA1_P, IN0_SDOA1_N, IN0_SDOB1_P, IN0_SDOB1_N, IN0_SDOA2_P, IN0_SDOA2_N, IN0_SDOA3_P, IN0_SDOA3_N);
 
 `include "adc_params.v"
    /// Pin definitions:
@@ -29,10 +29,10 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    output BIST_SCLK;
 
    // Output slot IOs
-   output DAC_BCK;
-   output DAC_LRCK;
-   output DAC_DATA0;
-   output DAC_DATA1;
+   output DAC_NOT_RST; // DOUTL1
+   output DAC_LRCK; // DOUTL2
+   output DOUTL3;
+   output DOUTL4;
    output DOUTL5;
    output DOUTL6;
    input  DFB1_P;
@@ -43,12 +43,12 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    input  DFB3_N;
    input  DFB4_P;
    input  DFB4_N;
-   output DOUT1_P;
-   output DOUT1_N;
-   output DOUT2_P;
-   output DOUT2_N;
-   output DOUT3_P;
-   output DOUT3_N;
+   output DAC_BCK_P; // DOUT1
+   output DAC_BCK_N;
+   output DAC_DATA1_P; // DOUT2
+   output DAC_DATA1_N;
+   output DAC_DATA2_P; // DOUT3
+   output DAC_DATA2_N;
    output DOUT4_P;
    output DOUT4_N;
    output DOUT5_P;
@@ -64,7 +64,7 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    output ICLK_SYNC;
    output ICLK_SDI;
    output ICLK_MCLK_ENA_P;
-    output ICLK_MCLK_ENA_N;
+   output ICLK_MCLK_ENA_N;
    output SCKB_P;
    output SCKB_N;
    output SCKA_P;
@@ -73,7 +73,7 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    // Master clock from oscillator
    input  SYSCLK_P;
    input  SYSCLK_N;
-
+ 
    // Debug output to coax jack
    output ICLK_DEBUG_P;
    output ICLK_DEBUG_N;
@@ -166,12 +166,12 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    IBUFDS IBUFDS_DFB3 (.O(DFB3), .I(DFB3_P), .IB(DFB3_N));
    wire   DFB4;
    IBUFDS IBUFDS_DFB4 (.O(DFB4), .I(DFB4_P), .IB(DFB4_N));
-   wire   DOUT1;
-   OBUFDS OBUFDS_DOUT1 (.O(DOUT1_P), .OB(DOUT1_N), .I(DOUT1));
-   wire   DOUT2;
-   OBUFDS OBUFDS_DOUT2 (.O(DOUT2_P), .OB(DOUT2_N), .I(DOUT2));
-   wire   DOUT3;
-   OBUFDS OBUFDS_DOUT3 (.O(DOUT3_P), .OB(DOUT3_N), .I(DOUT3));
+   wire   DAC_BCK;
+   OBUFDS OBUFDS_DAC_BCK (.O(DAC_BCK_P), .OB(DAC_BCK_N), .I(DAC_BCK));
+   wire   DAC_DATA1;
+   OBUFDS OBUFDS_DAC_DATA1 (.O(DAC_DATA1_P), .OB(DAC_DATA1_N), .I(DAC_DATA1));
+   wire   DAC_DATA2;
+   OBUFDS OBUFDS_DAC_DATA2 (.O(DAC_DATA2_P), .OB(DAC_DATA2_N), .I(DAC_DATA2));
    wire   DOUT4;
    OBUFDS OBUFDS_DOUT4 (.O(DOUT4_P), .OB(DOUT4_N), .I(DOUT4));
    wire   DOUT5;
@@ -182,19 +182,29 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    OBUFDS OBUFDS_DOUT7 (.O(DOUT7_P), .OB(DOUT7_N), .I(DOUT7));
    wire   DOUT8;
    OBUFDS OBUFDS_DOUT8 (.O(DOUT8_P), .OB(DOUT8_N), .I(DOUT8));
+   
 
    
    /// This section is all Xillybus stuff for the processor interface.
    // Some is for features which are not used.  This is more-or-less copied
    // from xillydemo.v.
    //
-   // More specifically, what we are mostly doing is instantiating the
-   // Xillybus core and defining the names of the signals that go to/from the
-   // core.  In the case of FIFOs, this the Xillybus end of the FIFO. (The
-   // names of the signals on our side of the FIFO are defined elsewhere.)
-   // There are also templates for the (currently unused) Xillybus random
-   // access modes xillybus_mem (which looks like a Unix file) and xillybus
-   // lite, which supports memory mapped registers.
+   // Mostly what we are doing is instantiating the Xillybus core and defining
+   // the names of the signals that go to/from the core.  The signals in this
+   // section are the Xillybus end of whatever is going on.  We could have
+   // renamed these signals to locally meaningul ones when we instantiate
+   // Xillybus, but it seems clearer to use the Xillybus names to represent
+   // where the signals are going.  All these signals are in the bus_clk
+   // domain.  (bus_clk is an output from Xillybus.)
+   //
+   // So in the case of FIFOs, these "user_" signals are the Xillybus end of
+   // the FIFO.  We declare the signals to/from our side of the FIFOs
+   // elsewhere (and give them meaningful names).
+   //
+   // The 8 bit read and write FIFOs are not used.  There are also templates
+   // for the (currently unused) Xillybus random access modes xillybus_mem
+   // (which looks like a Unix file) and xillybus lite, which supports memory
+   // mapped registers.
 
    // Clock and quiesce
    wire    bus_clk;
@@ -380,14 +390,19 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
 
 /// ILEMT interfaces:
 
-   // capture_clk is to generate the ADC and DAC clocking: adc_scka, adc_mclk,
+   // capture_clk is to generate the ADC and DAC clocking: adc SCKA, DAC_SCK,
    // etc.
    // 
-   // See adc_params.v for notes on current on current clock configuration,
-   // and also the MMCM/PLL IP configuration wizard.  capture_clk needs to be
-   // phase shifted wrt. SYSCLK to give maximum setup/hold time on the
-   // MCLK_ENA signal.  Ideally this should be phase-tweaked to get that
-   // measured relationship at the MCLK flip-flop.
+   // See adc_params.v and multi_dac_interface.v for notes on current on
+   // current clock configuration, and also the MMCM/PLL IP configuration
+   // wizard.  Current theory is that capture_clk must be SYSCLK/4 (which is
+   // also the DAC system clock rate).  This is forced by the need to get the
+   // same sample rate on ADC and DAC.
+   //
+   // capture_clk needs to be phase shifted approx 180 degrees wrt. SYSCLK to
+   // give maximum setup/hold time on the MCLK_ENA signal.  Ideally this
+   // should be phase-tweaked to get that measured relationship at the MCLK
+   // flip-flop.
    //
    // The phase shift and reclocking on MCLK_ENA means that MCLK is delayed by
    // about 1/2 SYSCLK cycle wrt. the signals that come straight from the
@@ -404,9 +419,9 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    // posedge and negedge on SCK, but it is pretty simple for us since we are
    // master, and use the double rate capture_clk to drive sampling.  (The bad
    // case seems to be a slave, because SCK is asynchronous and we don't have
-   // the double-rate clock.)  The ADC mostly writes, so only uses negedge
-   // SCKA for the configuration input (which does not exist on the
-   // LTC2512-24).
+   // the double-rate clock.)  The ADC mostly writes to SPI, so only uses
+   // negedge SCKA when reading the configuration input (which does not exist
+   // on the LTC2512-24).
 
    wire capture_clk;
    capture_clk1 capture_clk1_instance
@@ -417,15 +432,50 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
       );
 
 
-   // Output from ADC to FIFO.  The data format is a left-justified signed
-   // integer.  The low 8 bits are zero with the LTC2512-24.
+   // Notes on data overrun/underrun:
+   //
+   // It is possible that when we need to read a sample to send to the DAC
+   // that the write FIFO will be empty (underrun), or that when we want to
+   // write an ADC sample, the read FIFO will be full (overrun).  This is bad,
+   // and the larger software context should try to set up buffering,
+   // schemduling, etc., so this does not happen.  But when it does happen
+   // (which is likely every so often) then we should recover gracefully.
+   //
+   // Handling of overrun/underrun is incompletely implemented here, and needs
+   // software support also.  What necessarily happens is that ADC data is
+   // dropped, and the DAC does not update (holding a fixed value).  The big
+   // problem for us is that in addition to causing a transient glitch, an
+   // overrun/underrun can also cause permanent a phase jump between input and
+   // output, which affects the ILEMT demodulation.  It is also in principle
+   // possible that the sample/channel alignment could be corrupted so that
+   // data is going to the wrong channels.  (I am guessing that alignment
+   // problems are very unlikely because we transfer data as blocks.)
+   //
+   // Xillybus docs suggest forcing an EOF condition on the affected pipe to
+   // tell the software that it needs to reinitialize.
+
+   // The read FIFO for ADC data:
+   // 
+   // ADC data is represented as a left-justified signed integer.  The low 8
+   // bits are zero with the LTC2512-24.
    wire [31:0] capture_data;
-
-   // ADC FIFO full.
    wire        capture_full;
+   async_fifo_32 adc_fifo
+     (
+      .rst(!user_r_read_32_open),
+      .wr_clk(capture_clk),
+      .rd_clk(bus_clk),
+      .din(capture_data),
+      .wr_en(capture_en),
+      .rd_en(user_r_read_32_rden),
+      .dout(user_r_read_32_data),
+      .full(capture_full),
+      .empty(user_r_read_32_empty)
+      );
 
-   // Bundle all of the ADC inputs into a single word.  Note that bit index 0
-   // is the MS bit (but also the zero'th input).
+   // Bundle all of the ADC inputs into a single word.  Note that (opposite to
+   // our usual bit numbering) we make the MS bit be index 0 because it is the
+   // zero'th input.
    wire [0:adc_channels-1] ADC_SDOA;
    assign ADC_SDOA
      = {IN0_SDOA1,
@@ -441,8 +491,8 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
 	IN3_SDOA2,
 	IN3_SDOA3};
 
-   // Logic for acquiring on the ADC, stores data into the Xillybus
-   // read 32 fifo, fifo_32
+   // Logic for acquiring from the input boards.  Sends data into the Xillybus
+   // read 32 fifo, adc_fifo.
    multi_adc_interface the_adc
      (
       .adc_mclk(ICLK_MCLK_ENA),
@@ -460,37 +510,10 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
       .user_r_read_32_eof(user_r_read_32_eof)
       );
 
-   // Sends data from 32 bit write FIFO to DAC.
-   // 
-   // ### eventually set things up so that ADC actually starts when
-   // the first DAC data arrives.  This insures synchronization.  We
-   // have been making do without any synchronization so far, but it
-   // could allow us to know what the phase should be.  Advantage of
-   // not doing is that allows us to read data when no output is
-   // supplied.
-   wire dac_rden, dac_empty;
 
-   // FIFO output word
+   // The write FIFO interface (data sent to the DACs).
    wire [31:0] dac_fifo_data;
-   
-   assign dac_sck = capture_clk;
-   wire [1:0] DAC_DATA;
-   assign DAC_DATA = {DAC_DATA0, DAC_DATA1};
-   multi_dac_interface the_dac
-      (
-       .dac_bck(DAC_BCK),
-       .dac_data(DAC_DATA),
-       .dac_lrck(DAC_LRCK),
-       .capture_clk(capture_clk),
-       .bus_clk(bus_clk),
-       .dac_open_bus(user_w_write_32_open),
-       .dac_rden(dac_rden),
-       .dac_fifo_data(dac_fifo_data),
-       .dac_empty(dac_empty)
-       );
-
-
-   // DAC input data
+   wire dac_rden, dac_empty;
    async_fifo_32 dac_fifo
      (
       .wr_clk(bus_clk),
@@ -504,20 +527,41 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
       .empty(dac_empty)
       );
 
-   // ADC output data
-   async_fifo_32 adc_fifo
+   // dac_buffer manages the reading from our end of the write FIFO.
+   reg [31:0] dac_buffer [0:dac_channels-1];
+   wire dac_request, dac_buffer_ready, dac_open;
+   dac_buffer_reg the_dac_buffer_reg
      (
-      .rst(!user_r_read_32_open),
-      .wr_clk(capture_clk),
-      .rd_clk(bus_clk),
-      .din(capture_data),
-      .wr_en(capture_en),
-      .rd_en(user_r_read_32_rden),
-      .dout(user_r_read_32_data),
-      .full(capture_full),
-      .empty(user_r_read_32_empty)
+      .capture_clk(capture_clk),
+      .bus_clk(bus_clk),
+      .dac_buffer(dac_buffer),
+      .dac_request(daq_request),
+      .dac_buffer_ready(dac_buffer_ready),
+      .dac_open(dac_open),
+      .dac_open_bus(dac_open_bus),
+      .dac_rden(dac_rden),
+      .dac_fifo_data(dac_fifo_data),
+      .dac_empty(dac_empty)
       );
-   
 
-   assign  user_r_read_8_eof = 0;
+   // multi_dac_interface is the interface for the output board
+   wire [1:0] DAC_DATA_PINS = {DAC_DATA0, DAC_DATA1};
+   wire dac_underrun;
+   multi_dac_interface the_dac
+      (
+       .capture_clk(capture_clk),
+       .dac_buffer(dac_buffer),
+       .dac_bck(DAC_BCK),
+       .dac_data_pins(DAC_DATA_PINS),
+       .dac_lrck(DAC_LRCK),
+       .dac_not_rst(DAC_NOT_RST),
+       .dac_open(dac_open),
+       .dac_request(daq_request),
+       .dac_buffer_ready(dac_buffer_ready),
+       .dac_underrun(dac_underrun)
+       );
+
+
+   // Unused Xillybus interface signals
+   assign user_r_read_8_eof = 0;
 endmodule

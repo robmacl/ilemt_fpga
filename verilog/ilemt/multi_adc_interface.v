@@ -277,8 +277,9 @@ module multi_adc_interface
    // capture_en as an extra stage of registers to get a clean synchronous
    // output.
    parameter [31:0] zero_pad = 0;
-   // This generate is just a clue to constant fold the adc_bits test and
-   // padding.  These days it is an optional decoration.
+   // This is in a generate block to represent our expectation that
+   // the adc_bits test on the padding will get constant folded.
+   // These days generate is an optional decoration.
    generate
       always @(posedge capture_clk) begin
 	 // Zero pad on right if not 32 bit ADC
@@ -317,8 +318,8 @@ module multi_adc_interface
    genvar chan;
    generate
       // The fifo chain linkage defines what order we output to the external
-      // FIFO.  We want channel 0 (IN0_SDOA1) first, and to shift down toward
-      // channel 0.
+      // FIFO.  We want channel 0 (IN0_SDOA1) first, with the remaining
+      // channels shifting down toward channel 0.
       for (chan = 0; chan < acquire_adc_channels ; chan = chan + 1) begin
 	 adc_register adc_inst (.clock(capture_clk),
 				.reset(is_reset),
@@ -328,7 +329,7 @@ module multi_adc_interface
 				.fifo_chain_in(fifo_data[chan+1]),
 				.fifo_chain_out(fifo_data[chan])
 				);
-	 end
+      end
    endgenerate
    
    // Datapaths for acquire_bit and fifo_load_ena.
