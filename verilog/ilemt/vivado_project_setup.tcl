@@ -8,11 +8,13 @@ set proj_name ilemt
 set source_files [list \
  $origin_dir/ilemt.v \
  $origin_dir/multi_adc_interface.v \
+ $origin_dir/adc_register.v \
  $origin_dir/multi_dac_interface.v \
+ $origin_dir/dac_buffer_reg.v \
 ]
 
-# Sources to copy into Vivado project tree.  Use this for IP to avoid
-# cluttering the source tree with generated files.  If you
+# Sources to copy into Vivado project tree.  We use this for IP to
+# avoid cluttering the source tree with generated files.  If you
 # re-customize the IP you must copy it back into the source tree for
 # the changes to be committed.
 set import_files [list \
@@ -22,6 +24,17 @@ set import_files [list \
 
 set constraint_files [list \
  $origin_dir/ilemt.xdc \
+]
+
+# probably we should have a different sim set for each testbench or
+# something, for now just having only one in the sim_1 set.
+# $origin_dir/multi_adc_interface_tb.v \
+# $origin_dir/multi_adc_interface.v \
+
+set sim_files [list \
+ $origin_dir/multi_dac_interface_tb.v \
+ $origin_dir/dac_buffer_reg.v \
+ $origin_dir/multi_dac_interface.v \
 ]
 
 # Do the rest of the setup, which is mostly xillybus specific.

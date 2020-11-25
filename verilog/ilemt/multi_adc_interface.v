@@ -371,7 +371,7 @@ module multi_adc_interface
    reg [12:0] config_done_shift;
 
    always @(posedge capture_clk) begin
-      if (~is_config) begin
+      if (!is_config) begin
 	 config_shifter <= adc_config;
 	 config_done_shift <= 1;
       end

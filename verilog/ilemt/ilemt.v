@@ -1,4 +1,97 @@
-module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LED1, LED2, LED3, LED4, IN3_CARDSEL, IN2_CARDSEL, IN1_CARDSEL, IN0_CARDSEL, BIST_SYNC, BIST_MOSI, BIST_SCLK, DAC_NOT_RST, DAC_LRCK, DOUTL3, DOUTL4, DOUTL5, DOUTL6, DFB1_P, DFB1_N, DFB2_P, DFB2_N, DFB3_P, DFB3_N, DFB4_P, DFB4_N, DAC_BCK_P, DAC_BCK_N, DAC_DATA1_P, DAC_DATA1_N, DAC_DATA2_P, DAC_DATA2_N, DOUT4_P, DOUT4_N, DOUT5_P, DOUT5_N, DOUT6_P, DOUT6_N, DOUT7_P, DOUT7_N, DOUT8_P, DOUT8_N, ICLK_SYNC, ICLK_SDI, ICLK_MCLK_ENA_P, ICLK_MCLK_ENA_N, SCKB_P, SCKB_N, SCKA_P, SCKA_N, SYSCLK_P, SYSCLK_N, ICLK_DEBUG_P, ICLK_DEBUG_N, IN3_SDOA1_P, IN3_SDOA1_N, IN3_SDOB1_P, IN3_SDOB1_N, IN3_SDOA2_P, IN3_SDOA2_N, IN3_SDOA3_P, IN3_SDOA3_N, IN2_SDOA1_P, IN2_SDOA1_N, IN2_SDOB1_P, IN2_SDOB1_N, IN2_SDOA2_P, IN2_SDOA2_N, IN2_SDOA3_P, IN2_SDOA3_N, IN1_SDOA1_P, IN1_SDOA1_N, IN1_SDOB1_P, IN1_SDOB1_N, IN1_SDOA2_P, IN1_SDOA2_N, IN1_SDOA3_P, IN1_SDOA3_N, IN0_SDOA1_P, IN0_SDOA1_N, IN0_SDOB1_P, IN0_SDOB1_N, IN0_SDOA2_P, IN0_SDOA2_N, IN0_SDOA3_P, IN0_SDOA3_N);
+module ilemt (
+	      DEBUG1,
+	      DEBUG2,
+	      DEBUG3,
+	      DEBUG4,
+	      DEBUG5,
+	      DEBUG6,
+	      DEBUG7,
+	      DEBUG8,
+	      LED1,
+	      LED2,
+	      LED3,
+	      LED4,
+	      IN3_CARDSEL,
+	      IN2_CARDSEL,
+	      IN1_CARDSEL,
+	      IN0_CARDSEL,
+	      BIST_SYNC,
+	      BIST_MOSI,
+	      BIST_SCLK,
+	      DAC_NOT_RST,
+	      DAC_LRCK,
+	      DOUTL3,
+	      DOUTL4,
+	      DOUTL5,
+	      DOUTL6,
+	      DFB1_P,
+	      DFB1_N,
+	      DFB2_P,
+	      DFB2_N,
+	      DFB3_P,
+	      DFB3_N,
+	      DFB4_P,
+	      DFB4_N,
+	      DAC_BCK_P,
+	      DAC_BCK_N,
+	      DAC_DATA1_P,
+	      DAC_DATA1_N,
+	      DAC_DATA2_P,
+	      DAC_DATA2_N,
+	      DOUT4_P,
+	      DOUT4_N,
+	      DOUT5_P,
+	      DOUT5_N,
+	      DOUT6_P,
+	      DOUT6_N,
+	      DOUT7_P,
+	      DOUT7_N,
+	      DOUT8_P,
+	      DOUT8_N,
+	      ICLK_SYNC,
+	      ICLK_SDI,
+	      ICLK_MCLK_ENA_P,
+	      ICLK_MCLK_ENA_N,
+	      SCKB_P,
+	      SCKB_N,
+	      SCKA_P,
+	      SCKA_N,
+	      SYSCLK_P,
+	      SYSCLK_N,
+	      ICLK_DEBUG_P,
+	      ICLK_DEBUG_N,
+	      IN3_SDOA1_P,
+	      IN3_SDOA1_N,
+	      IN3_SDOB1_P,
+	      IN3_SDOB1_N,
+	      IN3_SDOA2_P,
+	      IN3_SDOA2_N,
+	      IN3_SDOA3_P,
+	      IN3_SDOA3_N,
+	      IN2_SDOA1_P,
+	      IN2_SDOA1_N,
+	      IN2_SDOB1_P,
+	      IN2_SDOB1_N,
+	      IN2_SDOA2_P,
+	      IN2_SDOA2_N,
+	      IN2_SDOA3_P,
+	      IN2_SDOA3_N,
+	      IN1_SDOA1_P,
+	      IN1_SDOA1_N,
+	      IN1_SDOB1_P,
+	      IN1_SDOB1_N,
+	      IN1_SDOA2_P,
+	      IN1_SDOA2_N,
+	      IN1_SDOA3_P,
+	      IN1_SDOA3_N,
+	      IN0_SDOA1_P,
+	      IN0_SDOA1_N,
+	      IN0_SDOB1_P,
+	      IN0_SDOB1_N,
+	      IN0_SDOA2_P,
+	      IN0_SDOA2_N,
+	      IN0_SDOA3_P,
+	      IN0_SDOA3_N);
 
 `include "adc_params.v"
    /// Pin definitions:
@@ -114,6 +207,9 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    input  IN3_SDOB1_N;
    input  IN3_SDOB1_P;
 
+   // Output bits for each DAC chip, bundled at multi_dac_interface.v
+   wire [0:1] DAC_DATA_PINS;
+   
 
    /// IO buffer instances for LVDS lines:
    // (from pinmap/pin_defs_verilog.v)
@@ -169,9 +265,9 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    wire   DAC_BCK;
    OBUFDS OBUFDS_DAC_BCK (.O(DAC_BCK_P), .OB(DAC_BCK_N), .I(DAC_BCK));
    wire   DAC_DATA1;
-   OBUFDS OBUFDS_DAC_DATA1 (.O(DAC_DATA1_P), .OB(DAC_DATA1_N), .I(DAC_DATA1));
+   OBUFDS OBUFDS_DAC_DATA1 (.O(DAC_DATA1_P), .OB(DAC_DATA1_N), .I(DAC_DATA_PINS[0]));
    wire   DAC_DATA2;
-   OBUFDS OBUFDS_DAC_DATA2 (.O(DAC_DATA2_P), .OB(DAC_DATA2_N), .I(DAC_DATA2));
+   OBUFDS OBUFDS_DAC_DATA2 (.O(DAC_DATA2_P), .OB(DAC_DATA2_N), .I(DAC_DATA_PINS[1]));
    wire   DOUT4;
    OBUFDS OBUFDS_DOUT4 (.O(DOUT4_P), .OB(DOUT4_N), .I(DOUT4));
    wire   DOUT5;
@@ -395,8 +491,14 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    // 
    // See adc_params.v and multi_dac_interface.v for notes on current on
    // current clock configuration, and also the MMCM/PLL IP configuration
-   // wizard.  Current theory is that capture_clk must be SYSCLK/4 (which is
-   // also the DAC system clock rate).  This is forced by the need to get the
+   // wizard.
+   // 
+   // Note: if you customize the MCMM IP then you need to copy the generated
+   // file back into the source tree (where this file is located):
+   //   cp vivado/ilemt.srcs/sources_1/ip/capture_clk1/capture_clk1.xci .
+   //
+   // Current theory is that capture_clk must be SYSCLK/4 (which is also the
+   // DAC System Clock SCK rate).  This is forced by the need to get the
    // same sample rate on ADC and DAC.
    //
    // capture_clk needs to be phase shifted approx 180 degrees wrt. SYSCLK to
@@ -422,6 +524,7 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    // the double-rate clock.)  The ADC mostly writes to SPI, so only uses
    // negedge SCKA when reading the configuration input (which does not exist
    // on the LTC2512-24).
+   //
 
    wire capture_clk;
    capture_clk1 capture_clk1_instance
@@ -437,14 +540,14 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    // It is possible that when we need to read a sample to send to the DAC
    // that the write FIFO will be empty (underrun), or that when we want to
    // write an ADC sample, the read FIFO will be full (overrun).  This is bad,
-   // and the larger software context should try to set up buffering,
-   // schemduling, etc., so this does not happen.  But when it does happen
+   // and the larger Linux software context should try to set up buffering,
+   // scheduling, etc., so this does not happen.  But when it does happen
    // (which is likely every so often) then we should recover gracefully.
    //
    // Handling of overrun/underrun is incompletely implemented here, and needs
    // software support also.  What necessarily happens is that ADC data is
    // dropped, and the DAC does not update (holding a fixed value).  The big
-   // problem for us is that in addition to causing a transient glitch, an
+   // problem for us is that (in addition to causing a transient glitch) an
    // overrun/underrun can also cause permanent a phase jump between input and
    // output, which affects the ILEMT demodulation.  It is also in principle
    // possible that the sample/channel alignment could be corrupted so that
@@ -454,10 +557,10 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
    // Xillybus docs suggest forcing an EOF condition on the affected pipe to
    // tell the software that it needs to reinitialize.
 
-   // The read FIFO for ADC data:
+   // Instantiation of the read FIFO for ADC data:
    // 
    // ADC data is represented as a left-justified signed integer.  The low 8
-   // bits are zero with the LTC2512-24.
+   // bits are zero with the LTC2512-24 on the current ILEMT input board.
    wire [31:0] capture_data;
    wire        capture_full;
    async_fifo_32 adc_fifo
@@ -511,7 +614,7 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
       );
 
 
-   // The write FIFO interface (data sent to the DACs).
+   // Instantiation of the write FIFO for data sent to the DACs.
    wire [31:0] dac_fifo_data;
    wire dac_rden, dac_empty;
    async_fifo_32 dac_fifo
@@ -527,38 +630,41 @@ module ilemt (DEBUG1, DEBUG2, DEBUG3, DEBUG4, DEBUG5, DEBUG6, DEBUG7, DEBUG8, LE
       .empty(dac_empty)
       );
 
-   // dac_buffer manages the reading from our end of the write FIFO.
-   reg [31:0] dac_buffer [0:dac_channels-1];
-   wire dac_request, dac_buffer_ready, dac_open;
+   // dac_buffer_reg manages the reading from our end of the write FIFO.
+   wire [dac_channels*32 - 1 : 0] dac_buffer;
+   wire dac_request, dac_buffer_ready, dac_open, dac_underrun;
+   // undriven pin dac_open_bus is constant 0
    dac_buffer_reg the_dac_buffer_reg
      (
       .capture_clk(capture_clk),
       .bus_clk(bus_clk),
       .dac_buffer(dac_buffer),
-      .dac_request(daq_request),
+      .dac_request(dac_request),
       .dac_buffer_ready(dac_buffer_ready),
+      .dac_underrun(dac_underrun),
       .dac_open(dac_open),
-      .dac_open_bus(dac_open_bus),
+      .dac_open_bus(user_w_write_32_open),
       .dac_rden(dac_rden),
       .dac_fifo_data(dac_fifo_data),
       .dac_empty(dac_empty)
       );
 
    // multi_dac_interface is the interface for the output board
-   wire [1:0] DAC_DATA_PINS = {DAC_DATA0, DAC_DATA1};
-   wire dac_underrun;
+   // ### DDP doesn't have a driver?
+   // ### dac_request is unconnected port?
+   // ### fix ilemt.xdc DAC pins
    multi_dac_interface the_dac
       (
        .capture_clk(capture_clk),
+       .enable(dac_open),
        .dac_buffer(dac_buffer),
-       .dac_bck(DAC_BCK),
-       .dac_data_pins(DAC_DATA_PINS),
-       .dac_lrck(DAC_LRCK),
-       .dac_not_rst(DAC_NOT_RST),
-       .dac_open(dac_open),
-       .dac_request(daq_request),
-       .dac_buffer_ready(dac_buffer_ready),
-       .dac_underrun(dac_underrun)
+       .dac_request(dac_request),
+
+       // DAC pins (all output)
+       .DAC_BCK(DAC_BCK),
+       .DAC_DATA_PINS(DAC_DATA_PINS),
+       .DAC_LRCK(DAC_LRCK),
+       .DAC_NOT_RST(DAC_NOT_RST)
        );
 
 

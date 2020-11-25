@@ -99,7 +99,7 @@ if {[string equal [get_filesets sim_1] ""]} {
 
 # Add files to 'sim_1' fileset
 set obj [get_filesets sim_1]
-# Empty (no sources present)
+add_files -fileset $obj -norecurse $sim_files
 
 # Set 'sim_1' fileset properties
 set obj [get_filesets sim_1]
