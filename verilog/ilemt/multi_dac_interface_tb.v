@@ -14,12 +14,10 @@ module multi_dac_interface_tb ();
    wire 	     bus_clk; // input to module (unused)
    wire [32*dac_channels - 1 : 0] dac_buffer; // output
    wire 	     dac_request; // input
-   wire 	     dac_buffer_ready; // output
    wire 	     dac_underrun; // output
    wire 	     dac_open; // output
-   reg 		     dac_open_bus; // input
+   reg 		     dac_fifo_open_bus; // input
    wire 	     dac_rden; // output
-   reg [31:0] 	     dac_fifo_data; // input
    reg	 	     dac_empty; // output
 
    
@@ -29,7 +27,7 @@ module multi_dac_interface_tb ();
    // dac_buffer_reg, are not read or written by the testbench, and are not
    // re-declared here.
    wire 	     DAC_BCK; // out from module
-   wire [1:0] 	     DAC_DATA_PINS; // out
+   wire [0:1] 	     DAC_DATA_PINS; // out
    wire 	     DAC_LRCK; // out
    wire 	     DAC_NOT_RST; // out
    
@@ -46,19 +44,27 @@ module multi_dac_interface_tb ();
    // Counters used to generate word data.
    reg [3:0] dac_count = 1;
    reg [1:0] dac_channel = 0;
-   
-   // DAC output register.
-   reg [31:0] dac_data_reg = 0;
 
+   // Simulated DAC output
+   wire [31:0] dac_fifo_data = {2'b00, dac_channel, 4'hA, dac_count, 4'hB,
+				2'b00, dac_channel, 4'hC, dac_count, 4'hD};
+   
+   // Simulated FIFO output data register.
    always @(posedge capture_clk)
      if (dac_rden) begin
 	// Load new simulated data in output register when module requests.
-	dac_data_reg <= {dac_channel, 4'hA, dac_count, 4'hB,
-			 dac_channel, 4'hC, dac_count, 4'hD};
 	dac_channel <= dac_channel + 1;
-	if (dac_channel == 0)
-	  dac_count <= dac_count + 1;
+	if (dac_channel == 3)
+	  dac_count <= dac_count + 1; 
      end
+
+   // Display FIFO data at the time that it should be latched.
+   reg prev_rden = 0;
+   always @(posedge capture_clk) begin
+      prev_rden <= dac_rden;
+      if (prev_rden)
+	$display("<FIFO %d %d: %x", dac_count, dac_channel, dac_fifo_data);
+   end
 
    
    /// deserialize and display data sent to DAC.
@@ -70,8 +76,11 @@ module multi_dac_interface_tb ();
    reg [24:0] dac_shiftin [0:1];
 
    reg prev_lrck = 1;
-   // Number of words captured. 
-   reg [31:0] capture_count = 1;
+   // Number of words captured.  Starting at 0 to synch with the output
+   // because we are writing the first sample before we actually have data (so
+   // it is undefined).  So sample data should match when they have the same
+   // dac_count and capture_count.
+   reg [3:0] capture_count = 0;
    always @(posedge DAC_BCK) begin
       if (prev_lrck != DAC_LRCK) begin
 	 // An edge on LRCK, start new word (left/right).  At this point the
@@ -84,9 +93,11 @@ module multi_dac_interface_tb ();
 	 // Not starting a word, shift in data (24 bits).
 	 if (dac_shiftin[0][24]) begin
 	    // At end of 24 bit input, marked by the stuffed 1 bit.
-	    $display("DAC0 %d %d: %x", capture_count, DAC_LRCK, dac_shiftin[0][23:0]);
-	    $display("DAC1 %d %d: %x", capture_count, DAC_LRCK, dac_shiftin[1][23:0]);
-	    capture_count <= capture_count + 1;
+	    // prev_lrck because that was the value during the data transfer now ending
+	    $display(">DAC0 %d %d: %x", capture_count, prev_lrck, dac_shiftin[0][23:0]);
+	    $display(">DAC1 %d %d: %x", capture_count, prev_lrck, dac_shiftin[1][23:0]);
+	    if (prev_lrck == 1)
+	      capture_count <= capture_count + 1;
 	    dac_shiftin[0] <= 0;
 	    dac_shiftin[1] <= 0;
 	 end
@@ -107,11 +118,11 @@ module multi_dac_interface_tb ();
    assign bus_clk = capture_clk;
 
    initial begin
-      dac_open_bus <= 0;
+      dac_fifo_open_bus <= 0;
       dac_empty <= 1;
       
       #(200)
-      dac_open_bus <= 1;
+      dac_fifo_open_bus <= 1;
 
       #(200)
       @(posedge capture_clk)
@@ -128,10 +139,9 @@ module multi_dac_interface_tb ();
       .bus_clk(bus_clk),
       .dac_buffer(dac_buffer),
       .dac_request(dac_request),
-      .dac_buffer_ready(dac_buffer_ready),
       .dac_underrun(dac_underrun),
       .dac_open(dac_open),
-      .dac_open_bus(dac_open_bus),
+      .dac_fifo_open_bus(dac_fifo_open_bus),
       .dac_rden(dac_rden),
       .dac_fifo_data(dac_fifo_data),
       .dac_empty(dac_empty)

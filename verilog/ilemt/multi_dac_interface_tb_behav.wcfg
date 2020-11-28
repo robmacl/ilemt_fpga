@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="multi_dac_interface_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="multi_dac_interface_tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="6740000001fs"></ZoomEndTime>
+      <Cursor1Time time="780000000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="240"></NameColumnWidth>
+      <ValueColumnWidth column_width="135"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="22" />
+   <wvobject fp_name="/multi_dac_interface_tb/dac_buffer" type="array">
+      <obj_property name="ElementShortName">dac_buffer[127:0]</obj_property>
+      <obj_property name="ObjectShortName">dac_buffer[127:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_request" type="logic">
+      <obj_property name="ElementShortName">dac_request</obj_property>
+      <obj_property name="ObjectShortName">dac_request</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_underrun" type="logic">
+      <obj_property name="ElementShortName">dac_underrun</obj_property>
+      <obj_property name="ObjectShortName">dac_underrun</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_open" type="logic">
+      <obj_property name="ElementShortName">dac_open</obj_property>
+      <obj_property name="ObjectShortName">dac_open</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_fifo_open_bus" type="logic">
+      <obj_property name="ElementShortName">dac_fifo_open_bus</obj_property>
+      <obj_property name="ObjectShortName">dac_fifo_open_bus</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_rden" type="logic">
+      <obj_property name="ElementShortName">dac_rden</obj_property>
+      <obj_property name="ObjectShortName">dac_rden</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_fifo_data" type="array">
+      <obj_property name="ElementShortName">dac_fifo_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">dac_fifo_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_empty" type="logic">
+      <obj_property name="ElementShortName">dac_empty</obj_property>
+      <obj_property name="ObjectShortName">dac_empty</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/DAC_BCK" type="logic">
+      <obj_property name="ElementShortName">DAC_BCK</obj_property>
+      <obj_property name="ObjectShortName">DAC_BCK</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/DAC_DATA_PINS" type="array">
+      <obj_property name="ElementShortName">DAC_DATA_PINS[1:0]</obj_property>
+      <obj_property name="ObjectShortName">DAC_DATA_PINS[1:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/DAC_LRCK" type="logic">
+      <obj_property name="ElementShortName">DAC_LRCK</obj_property>
+      <obj_property name="ObjectShortName">DAC_LRCK</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/DAC_NOT_RST" type="logic">
+      <obj_property name="ElementShortName">DAC_NOT_RST</obj_property>
+      <obj_property name="ObjectShortName">DAC_NOT_RST</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/capture_clk" type="logic">
+      <obj_property name="ElementShortName">capture_clk</obj_property>
+      <obj_property name="ObjectShortName">capture_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_count" type="array">
+      <obj_property name="ElementShortName">dac_count[3:0]</obj_property>
+      <obj_property name="ObjectShortName">dac_count[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_channel" type="array">
+      <obj_property name="ElementShortName">dac_channel[1:0]</obj_property>
+      <obj_property name="ObjectShortName">dac_channel[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/dac_shiftin" type="array">
+      <obj_property name="ElementShortName">dac_shiftin[0:1][24:0]</obj_property>
+      <obj_property name="ObjectShortName">dac_shiftin[0:1][24:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/prev_lrck" type="logic">
+      <obj_property name="ElementShortName">prev_lrck</obj_property>
+      <obj_property name="ObjectShortName">prev_lrck</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/capture_count" type="array">
+      <obj_property name="ElementShortName">capture_count[31:0]</obj_property>
+      <obj_property name="ObjectShortName">capture_count[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/the_dac_buffer_reg/new_data" type="array">
+      <obj_property name="ElementShortName">new_data[0:3][31:0]</obj_property>
+      <obj_property name="ObjectShortName">new_data[0:3][31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/the_dac_buffer_reg/state" type="array">
+      <obj_property name="ElementShortName">state[2:0]</obj_property>
+      <obj_property name="ObjectShortName">state[2:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/the_dac_buffer_reg/in_index" type="array">
+      <obj_property name="ElementShortName">in_index[1:0]</obj_property>
+      <obj_property name="ObjectShortName">in_index[1:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/multi_dac_interface_tb/the_dac_buffer_reg/load_buffer" type="logic">
+      <obj_property name="ElementShortName">load_buffer</obj_property>
+      <obj_property name="ObjectShortName">load_buffer</obj_property>
+   </wvobject>
+</wave_config>

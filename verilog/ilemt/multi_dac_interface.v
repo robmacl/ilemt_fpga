@@ -1,6 +1,10 @@
-// Interface to TI PCM1794A on the ILEMT DAC board.  We implement four output
-// channels using 2 dual channel DACs.  We are using I2S data format, 24 bit.
-// Our input dac_buffer 32 bit, but we discard the low 8 bits.
+// Interface to TI PCM1794A on the ILEMT DAC board.
+//
+// We implement four output channels using 2 dual channel DACs (chip 0 and
+// chip 1).  I am using the channel mapping where channels 0..3 are in
+// sequence 0L 0R 1L 1R.  That is, left is a lower channel than right.  We are
+// using I2S data format, 24 bit.  Our input dac_buffer 32 bit, but we discard
+// the low 8 bits.
 //
 // The DAC sample rate has to be the same as the ADC (decimated) sample rate,
 // and the DAC board derives its clean system clock (SCK) by a hardware divide
@@ -25,6 +29,9 @@ module multi_dac_interface
 
    // The four current output samples (one per channel) that we are to send to
    // the DACs.
+   // 
+   // Note: you will get many (32?) warnings about unconnected ports, since we
+   // only use 24 of 32 bits on each channel.
    input wire [32*dac_channels - 1 : 0] dac_buffer,
 
    // Request new data from dac_buffer_reg()
@@ -44,23 +51,26 @@ module multi_dac_interface
    // interleaved, giving the four output channels.  Serial data is MSB first,
    // followed by zero pad data.  In I2S the first posedge on BCK is a dummy
    // bit, see below.
-   output reg [dac_chips-1:0] DAC_DATA_PINS,
+   output reg [0:dac_chips-1] DAC_DATA_PINS,
 
-   // The Left/Right Clock pin.  The rising and trailing edges of LRCK tell
-   // the DAC when to latch data.  The left data is transferred when
-   // LRCK is low, so the left data is *latched* by DAC on the positive edge.
+   // The Left/Right Clock pin.  The left data is transferred when LRCK is
+   // low.  The rising and falling edges of LRCK tell the DAC when to latch
+   // data, so the left data is *latched* by DAC on the positive edge.
+   //
    // I imagine that the data is clocked into the channel DACs simultaneously,
    // on the negative edge of LRCK (after the right sample data word is
-   // complete).  LRCK transitions on a negative edge of BCK, the last bit
-   // period of the sample.  (No actual data is transmitted in this last bit
-   // period because in I2S the data is at the beginning of the LR window,
-   // left justified.)  The full sample period is left channel then right, so
-   // the first LRCK phase is low.
+   // complete).
+   //
+   // LRCK transitions on a negative edge of BCK, the last bit period of the
+   // sample.  (No actual data is transmitted in this last bit period because
+   // in I2S the data is at the beginning of the LR window, left justified.)
+   // The full sample period is left channel then right, so the first LRCK
+   // phase is low.
    // 
    // [The LRCK rate is how the DAC learns what the sample rate is, but I am
    // operating under the assumption that the actual sample clock is the
-   // system clock SCK.  It has logic to figure out which of several clock
-   // divisors are being used.]
+   // system clock SCK.  The chip has logic to figure out which of several
+   // clock divisors are being used.]
    output reg 		      DAC_LRCK,
 
    // Reset signal, output pin to DACs (negated).
@@ -72,6 +82,9 @@ module multi_dac_interface
    // 
    // ### It would be nice if the DAC outputs are zero when we are in reset,
    // not sure whether the ~RST reset forces this.
+   //
+   // ### currently we write undefined data for the first LRCK cycle anyway
+   // because we don't dac_request until after the first sample.
    output reg 		      DAC_NOT_RST
    );
 
@@ -155,17 +168,17 @@ module multi_dac_interface
 	    // include the I2S start pad bit.
 	    dac_shifter[0] <= {1'b0, dac_buffer0};
 	    dac_shifter[1] <= {1'b0, dac_buffer2};
-
-	    // Request new output data from the buffer so it data is ready
-	    // when we next want it.
-	    dac_request <= 1;
+	    dac_request <= 0;
 	 end
 	 else begin
 	    // We are in a left period (so are beginning a right).  Load
 	    // shifters with the right-channel data, channels 1 and 3.
 	    dac_shifter[0] <= {1'b0, dac_buffer1};
 	    dac_shifter[1] <= {1'b0, dac_buffer3};
-	    dac_request <= 0;
+
+	    // Request new output data now that we are done with the buffer so
+	    // it data is ready when we next want it.
+	    dac_request <= 1;
 	 end
       end
       else begin

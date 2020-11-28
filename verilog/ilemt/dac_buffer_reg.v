@@ -42,31 +42,25 @@ module dac_buffer_reg
    // Channel 0 is stored in 4*32 - 1:3*32, channel 1 in 3*32 - 1:2*32, etc.
    output reg [dac_channels*32 - 1 : 0] dac_buffer,
 
-   // We implement a two-step handshake.  The enabled DAC asserts dac_request
-   // for one capture_clk cycle when it is ready for a new sample.  We assert
-   // dac_data_ready for one cycle once dac_buffer is filled.
-   //
-   // Limitations/specifics: immediately on dac_request we transfer the
-   // internal buffer to dac_buffer and assert dac_buffer_ready (unless there
-   // was an underrun, see dac_underrun).  dac_request is ignored during the 4
-   // capture_clk cycles after a preceding dac_request (which is when we are
-   // reading the next sample).
+   // The enabled DAC asserts dac_request for one capture_clk cycle when it is
+   // ready for a new sample.  Immediately on dac_request we transfer the
+   // internal buffer to dac_buffer.  Don't assert dac_request again during
+   // the 4 capture_clk cycles after a preceding dac_request (which is when we
+   // are reading the next sample).
    input wire 	     dac_request,
-   output reg 	     dac_buffer_ready,
    
    // We assert this for one cycle on each sample period where we went to read
    // the FIFO and found it was empty.  If there was an underrun, then
-   // dac_buffer_ready is suppressed and dac_request does *not* copy whatever
-   // (possibly partial data) has been read.  Instead, the last valid output
-   // is latched.  But we do still attempt to read another sample.  We
-   // continue with further read attempts, at the sample rate (as paced by
-   // dac_request).
+   // dac_request does *not* copy whatever (possibly partial data) has been
+   // read.  Instead, the last valid output is latched.  But we do still
+   // attempt to read another sample.  We continue with further read attempts,
+   // at the sample rate (as paced by dac_request).
    output reg 	     dac_underrun,
 
-   // True if the DAC pipe is open and the FIFO has been non-empty at least
-   // once.  The DAC drivers should be held in reset when not open.  This can
-   // also be used to trigger start of the read acquisition, synchronizing the
-   // output and input streams.
+   // True if we are ready for the first daq_request.  The DAC pipe is open
+   // and the FIFO has been non-empty at least once.  The DAC drivers should
+   // be held in reset when not open.  This can also be used to trigger start
+   // of the read acquisition, synchronizing the output and input streams.
    //
    // We add the non-empty requirement (as in the Xillybus templates) because
    // there is likely a delay between the time that the pipe is opened and
@@ -76,7 +70,7 @@ module dac_buffer_reg
    output reg 	     dac_open,
 
    // Input from Xillybus, true if the DAC pipe is open (bus_clk domain).
-   input wire 	     dac_open_bus,
+   input wire 	     dac_fifo_open_bus,
 
    // FIFO interface
    output reg 	     dac_rden,
@@ -98,29 +92,33 @@ module dac_buffer_reg
    // True if there was an undderrun for one of the reads on this sample.
    reg was_underrun;
 
-   // Asserted for one cycle to indicate that new_data is ready, and should be
-   // loaded into the output buffer.
-   reg 	load_buffer;
-
-   // dac_buffer latch datapath
+   // dac_buffer datapaths
    always @(posedge capture_clk) begin
-      if (load_buffer) begin
+      // dac_request directly latches new_data into the output so that it is
+      // ready on the next cycle.  This is inhibited if there was an underrun.
+      if (dac_request && !was_underrun) begin
 	 dac_buffer <= {new_data[0], new_data[1], new_data[2], new_data[3]};
-      	 dac_buffer_ready <= 1;
       end
-      else begin
-	 dac_buffer_ready <= 0;
+
+      // If we just read the FIFO, then store it into new_data.
+      if (dac_rden) begin
+	 new_data[in_index] <= dac_fifo_data;
       end
-      
-      // We can always set new_data because it is harmless to copy
-      // dac_fifo_data more than once.  We just need to increment in_index on
-      // the same cycle we assert dac_rden so that the final value is correct.
-      // 
-      // Writing the new_data memory here keeps the datapath out of the state
-      // machine.
-      new_data[in_index] <= dac_fifo_data;
    end
-    
+
+
+   /// FIFO open synchronizer:
+
+   // Clock crossing logic: bus_clk -> capture_clk
+   (* ASYNC_REG = "TRUE" *) reg dac_fifo_open_cross = 0;
+   (* ASYNC_REG = "TRUE" *) reg dac_fifo_open = 0;
+   always @(posedge capture_clk)
+     begin
+	dac_fifo_open_cross <= dac_fifo_open_bus;
+	dac_fifo_open <= dac_fifo_open_cross;
+     end
+
+   
    /// State machine:
    //
    // Reading from the FIFO is one sample ahead of the output buffer.  We
@@ -129,98 +127,90 @@ module dac_buffer_reg
    // need to have a sample ready when the request comes in.  There should
    // always be many samples in the FIFO, so reading ahead will not cause
    // spurious underruns.
-   parameter reset_state = 0;  // In reset
-   parameter start_state = 1;  // Start first FIFO read
-   parameter fifo_state = 2;   // Reading from FIFO
-   parameter wait_state = 3;   // Waiting for next read request
-   reg state = reset_state;
+   parameter reset_state = 0;  // In reset, FIFO not open
+   parameter empty_state = 1;  // Waiting for first data to arrive
+   parameter start_state = 2;  // Start first FIFO read
+   parameter fifo_state = 3;   // Reading from FIFO
+   parameter wait_state = 4;   // Waiting for next read request
+   reg [2:0] state = reset_state;
 
    always @(posedge capture_clk) begin
-      if (!dac_open && state != reset_state) begin
-	 state <= reset_state;
-      end
-      else
-	case (state)
-	  reset_state: begin
-	     // Output ports:
-	     // dac_buffer: not initialized on reset
-	     // dac_buffer_ready: set in the dac_buffer latch above
-	     dac_underrun <= 0;
-	     // dac_open: set in FIFO open synchronizer below
-	     dac_rden <= 0;
+      case (state)
+	reset_state: begin
+	   // Output ports:
+	   // dac_buffer: not initialized on reset
+	   // dac_buffer_ready: set in the dac_buffer latch above
+	   dac_underrun <= 0;
+	   dac_open <= 0;
+	   dac_rden <= 0;
 
-	     // Local state
-	     in_index <= 0;
-	     was_underrun <= 0;
-	     load_buffer <= 0;
-	     
-	     if (dac_open)
-	       state <= start_state;
-	  end
+	   // Local state
+	   in_index <= 0;
+	   was_underrun <= 0;
+	   
+	   if (dac_fifo_open)
+	     state <= empty_state;
+	end
 
-	  start_state: begin
-	     // Delay while output buffer is loaded and also start read of
-	     // channel 0.
-	     in_index <= 0;
-	     dac_rden <= 1;
-	     was_underrun <= dac_empty;
-	     state <= fifo_state;
-	  end
+	empty_state: begin
+	   // This is a post-reset state, not one we go thru in normal
+	   // operation.  We wait here for first data to become available (so
+	   // we don't get spurious underrun).  After this the state machine
+	   // handles dac_empty by generating an underrun.
+	   if (!dac_empty)
+	     state <= start_state;
+	end
 
-	  fifo_state: begin
-	     // we are now reading data: new_data[in_index] has been set to
-	     // dac_fifo_data (in dac_buffer_latch above).
-	     if (in_index == dac_channels - 1) begin
-		dac_rden <= 0;
-		state <= wait_state;
-	     end
-	     else begin
-		dac_rden <= 1;
-		was_underrun <= (was_underrun | dac_empty);
-	     end
-	     in_index <= in_index + 1;
-	  end
+	start_state: begin
+	   // Start of normal operation state sequence.  This gives a cycle of
+	   // delay while new_data is copied into the output buffer, and
+	   // starts the FIFO read of channel 0 for the new sample.
+	   if (dac_fifo_open) begin
+	      in_index <= 0;
+	      dac_rden <= 1;
+	      was_underrun <= dac_empty;
+	      state <= fifo_state;
+	   end
+	   else begin
+	      // If FIFO has closed, then go back into reset.  We don't need
+	      // to check in every state as long as we notice in a timely way.
+	      state <= reset_state;
+	   end
+	end
 
-	  wait_state: begin
-	     if (dac_request) begin
-		// Data has been requested.
+	fifo_state: begin
+	   // we are now reading data: new_data[in_index] has been set to
+	   // dac_fifo_data (in dac_buffer_latch above).
+	   if (in_index == dac_channels - 1) begin
+	      dac_rden <= 0;
+	      state <= wait_state;
+	   end
+	   else begin
+	      dac_rden <= 1;
+	      was_underrun <= (was_underrun | dac_empty);
+	   end
+	   in_index <= in_index + 1;
+	end
 
-		// Flag any underrun on the new sample.
-		dac_underrun <= was_underrun;
+	wait_state: begin
+	   // Delay our dac_open output until now so that we do not get a
+	   // request until we are ready for it.
+	   dac_open <= 1;
+	   if (dac_request) begin
+	      // Data has been requested.
 
-		// Maybe initiate transfer.
-		load_buffer <= ~was_underrun;
+	      // Flag any underrun on the new sample.
+	      dac_underrun <= was_underrun;
 
-		// Start reading next sample
-		state <= start_state;
-	     end
-	  end
+	      // Start reading next sample
+	      state <= start_state;
+	   end
+	end
 
-	  default: begin
-	     state <= reset_state;
-	  end
-	endcase
+	default: begin
+	   state <= reset_state;
+	end
+      endcase
    end // always (posedge capture_clk)
-
-
-   /// FIFO open synchronizer:
-
-   // Has the FIFO been non-empty since reset ended?
-   reg saw_nonempty = 0;
-   
-   // Clock crossing logic: bus_clk -> capture_clk
-   (* ASYNC_REG = "TRUE" *) reg dac_open_cross1 = 0;
-   (* ASYNC_REG = "TRUE" *) reg dac_open_cross2 = 0;
-   always @(posedge capture_clk)
-     begin
-	dac_open_cross1 <= dac_open_bus;
-	dac_open_cross2 <= dac_open_cross1;
-	dac_open <= dac_open_cross2 & saw_nonempty;
-
-	if (state == reset_state)
-	  saw_nonempty <= 0;
-	else
-	  saw_nonempty <= ~dac_empty | saw_nonempty;
-     end
 
 endmodule

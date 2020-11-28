@@ -632,7 +632,7 @@ module ilemt (
 
    // dac_buffer_reg manages the reading from our end of the write FIFO.
    wire [dac_channels*32 - 1 : 0] dac_buffer;
-   wire dac_request, dac_buffer_ready, dac_open, dac_underrun;
+   wire dac_request, dac_open, dac_underrun;
    // undriven pin dac_open_bus is constant 0
    dac_buffer_reg the_dac_buffer_reg
      (
@@ -640,19 +640,15 @@ module ilemt (
       .bus_clk(bus_clk),
       .dac_buffer(dac_buffer),
       .dac_request(dac_request),
-      .dac_buffer_ready(dac_buffer_ready),
       .dac_underrun(dac_underrun),
       .dac_open(dac_open),
-      .dac_open_bus(user_w_write_32_open),
+      .dac_fifo_open_bus(user_w_write_32_open),
       .dac_rden(dac_rden),
       .dac_fifo_data(dac_fifo_data),
       .dac_empty(dac_empty)
       );
 
    // multi_dac_interface is the interface for the output board
-   // ### DDP doesn't have a driver?
-   // ### dac_request is unconnected port?
-   // ### fix ilemt.xdc DAC pins
    multi_dac_interface the_dac
       (
        .capture_clk(capture_clk),
