@@ -81,6 +81,13 @@ module dac_buffer_reg
 `include "adc_params.v"
 
    /// State machine:
+   parameter reset_state = 0;  // In reset, FIFO not open
+   parameter empty_state = 1;  // Waiting for first data to arrive
+   parameter start_state = 2;  // Start first FIFO read
+   parameter fifo_state = 3;   // Reading from FIFO
+   parameter last_state = 4;   // Loading last channel from FIFO
+   parameter wait_state = 5;   // Waiting for next read request
+   reg [2:0] state = reset_state;
 
    // Index in new_data, the next channel to read from FIFO
    reg [1:0] in_index;
@@ -89,8 +96,13 @@ module dac_buffer_reg
    // dac_request.
    reg [31:0] new_data [0:3];
 
-   // True if there was an undderrun for one of the reads on this sample.
+   // True if there was an underrun for one of the reads on the sample that
+   // should have been in new_data.
    reg was_underrun;
+
+   // If true, load fifo data into new_data.  The previous state is
+   // fifo_state.
+   reg load_new;
 
    // dac_buffer datapaths
    always @(posedge capture_clk) begin
@@ -101,8 +113,15 @@ module dac_buffer_reg
       end
 
       // If we just read the FIFO, then store it into new_data.
-      if (dac_rden) begin
+      if (load_new) begin
 	 new_data[in_index] <= dac_fifo_data;
+	 in_index <= in_index + 1;
+      end
+      else begin
+	 // Except in the case of reset this is redundant (because we have
+	 // wrapped to zero), but this makes it clearer what index we are
+	 // writing to above.
+	 in_index <= 0;
       end
    end
 
@@ -127,13 +146,6 @@ module dac_buffer_reg
    // need to have a sample ready when the request comes in.  There should
    // always be many samples in the FIFO, so reading ahead will not cause
    // spurious underruns.
-   parameter reset_state = 0;  // In reset, FIFO not open
-   parameter empty_state = 1;  // Waiting for first data to arrive
-   parameter start_state = 2;  // Start first FIFO read
-   parameter fifo_state = 3;   // Reading from FIFO
-   parameter wait_state = 4;   // Waiting for next read request
-   reg [2:0] state = reset_state;
-
    always @(posedge capture_clk) begin
       case (state)
 	reset_state: begin
@@ -145,7 +157,8 @@ module dac_buffer_reg
 	   dac_rden <= 0;
 
 	   // Local state
-	   in_index <= 0;
+	   load_new <= 0;
+	   
 	   was_underrun <= 0;
 	   
 	   if (dac_fifo_open)
@@ -162,11 +175,9 @@ module dac_buffer_reg
 	end
 
 	start_state: begin
-	   // Start of normal operation state sequence.  This gives a cycle of
-	   // delay while new_data is copied into the output buffer, and
-	   // starts the FIFO read of channel 0 for the new sample.
+	   // Start of normal operation state sequence.  This starts the FIFO
+	   // read of channel 0 for the new sample.
 	   if (dac_fifo_open) begin
-	      in_index <= 0;
 	      dac_rden <= 1;
 	      was_underrun <= dac_empty;
 	      state <= fifo_state;
@@ -176,35 +187,52 @@ module dac_buffer_reg
 	      // to check in every state as long as we notice in a timely way.
 	      state <= reset_state;
 	   end
+	   load_new <= 0;
 	end
 
 	fifo_state: begin
-	   // we are now reading data: new_data[in_index] has been set to
-	   // dac_fifo_data (in dac_buffer_latch above).
-	   if (in_index == dac_channels - 1) begin
+	   // We are now reading data.
+	   if (in_index == dac_channels - 2) begin
+	      // Load of last channel is now underway, so go to last_state.
+	      // We do not have anymore FIFO data to read, so turn off
+	      // dac_rden.
 	      dac_rden <= 0;
-	      state <= wait_state;
+	      state <= last_state;
 	   end
 	   else begin
 	      dac_rden <= 1;
 	      was_underrun <= (was_underrun | dac_empty);
 	   end
-	   in_index <= in_index + 1;
+	   // On the next cycle new_data[in_index] will be set to
+	   // dac_fifo_data (in datapath latch above).
+	   load_new <= 1;
+	end
+
+	last_state: begin
+	   // This state delays for one cycle while we wait for the new_data
+	   // load of the last channel to complete.
+	   load_new <= 0;
+	   state <= wait_state;
 	end
 
 	wait_state: begin
+	   // Waiting for dac_request
+
 	   // Delay our dac_open output until now so that we do not get a
 	   // request until we are ready for it.
 	   dac_open <= 1;
 	   if (dac_request) begin
-	      // Data has been requested.
+	      // Data has been requested.  dac_request also triggers the
+	      // datapath latch to transfer new_data to dac_buffer on this
+	      // same cycle that we get here.
 
-	      // Flag any underrun on the new sample.
+	      // Flag any underrun on now-being-loaded dac_buffer sample.
 	      dac_underrun <= was_underrun;
 
 	      // Start reading next sample
 	      state <= start_state;
 	   end
+	   load_new <= 0;
 	end
 
 	default: begin

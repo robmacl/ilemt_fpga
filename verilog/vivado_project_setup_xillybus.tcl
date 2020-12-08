@@ -2,7 +2,11 @@
 #   ilemt_fpga/xillinux/verilog/xillydemo-vivado.tcl
 #
 # from xillinux-eval-microzed-2.0c.zip.  It sets up things for the
-# Xillybus IP on the MicroZed.
+# Xillybus IP on the MicroZed target.
+# 
+# Some project settings (eg. for simulation) have been added from
+# vivado project export tcl.
+
 
 if {[string first { } $origin_dir] >= 0} {
 send_msg_id xillydemo-1 error "The path to the the project directory contains white space(s): \"$origin_dir\". This is known to cause problems with Vivado. Please move the project to a path without white spaces, and try again."
@@ -103,9 +107,23 @@ add_files -fileset $obj -norecurse $sim_files
 
 # Set 'sim_1' fileset properties
 set obj [get_filesets sim_1]
-set_property "top" "unknown" $obj
-set_property "xsim.simulate.runtime" "1000 ns" $obj
-set_property "xsim.simulate.uut" "UUT" $obj
+# incremental 0 got around a hanging behavior in simulation start
+# which happened once.  You may be fine without it, but startup
+# doesn't take long even with it on.
+set_property -name "incremental" -value "0" -objects $obj
+# IDK, default sim mode?
+set_property -name "nl.mode" -value "funcsim" -objects $obj
+# related to setting top module, it would seem
+set_property -name "source_set" -value "" -objects $obj
+set_property -name "top_auto_set" -value "0" -objects $obj
+# set this to correct top module in the version specific script
+set_property -name "top" -value $sim_top_module -objects $obj
+# Run for 100 us
+set_property -name "xsim.simulate.runtime" "100 us" $obj
+# IDK
+set_property -name "xsim.simulate.saif_scope" -value "UUT" -objects $obj
+# save all signals so you can add to the waveform display
+set_property -name "xsim.simulate.log_all_signals" -value "1" -objects $obj
 
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs synth_1] ""]} {

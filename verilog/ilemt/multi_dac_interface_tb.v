@@ -46,24 +46,33 @@ module multi_dac_interface_tb ();
    reg [1:0] dac_channel = 0;
 
    // Simulated DAC output
-   wire [31:0] dac_fifo_data = {2'b00, dac_channel, 4'hA, dac_count, 4'hB,
-				2'b00, dac_channel, 4'hC, dac_count, 4'hD};
-   
-   // Simulated FIFO output data register.
-   always @(posedge capture_clk)
-     if (dac_rden) begin
-	// Load new simulated data in output register when module requests.
-	dac_channel <= dac_channel + 1;
-	if (dac_channel == 3)
-	  dac_count <= dac_count + 1; 
-     end
+   reg [31:0] dac_fifo_data;
 
-   // Display FIFO data at the time that it should be latched.
+   // These feed the FIFO data trace
+   reg [3:0] prev_count;
+   reg [1:0] prev_chan;
    reg prev_rden = 0;
+
+   // Simulated FIFO output data register.
    always @(posedge capture_clk) begin
+      if (dac_rden) begin
+	 // Load new simulated data in output register when module requests.
+	 dac_channel <= dac_channel + 1;
+	 if (dac_channel == 3)
+	   dac_count <= dac_count + 1;
+
+	 prev_chan <= dac_channel;
+	 prev_count <= dac_count;
+	 dac_fifo_data <= {2'b00, dac_channel, 4'hA, dac_count, 4'hB,
+			   2'b00, dac_channel, 4'hC, dac_count, 4'hD};
+      end
+
+      // Display FIFO data at the time that it should be latched.
       prev_rden <= dac_rden;
-      if (prev_rden)
-	$display("<FIFO %d %d: %x", dac_count, dac_channel, dac_fifo_data);
+      if (prev_rden) begin
+	 $display("<FIFO chan %d, samp %d: %x", prev_chan, prev_count,
+		  dac_fifo_data);
+      end
    end
 
    
@@ -94,8 +103,14 @@ module multi_dac_interface_tb ();
 	 if (dac_shiftin[0][24]) begin
 	    // At end of 24 bit input, marked by the stuffed 1 bit.
 	    // prev_lrck because that was the value during the data transfer now ending
-	    $display(">DAC0 %d %d: %x", capture_count, prev_lrck, dac_shiftin[0][23:0]);
-	    $display(">DAC1 %d %d: %x", capture_count, prev_lrck, dac_shiftin[1][23:0]);
+	    $display(">DAC0 chan %1d, samp %d: %x",
+		     1 - prev_lrck,
+		     capture_count, 
+		     dac_shiftin[0][23:0]);
+	    $display(">DAC1 chan %1d, samp %d: %x",
+	       	     3 - prev_lrck,
+		     capture_count,
+		     dac_shiftin[1][23:0]);
 	    if (prev_lrck == 1)
 	      capture_count <= capture_count + 1;
 	    dac_shiftin[0] <= 0;

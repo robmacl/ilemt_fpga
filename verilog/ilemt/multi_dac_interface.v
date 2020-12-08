@@ -2,9 +2,11 @@
 //
 // We implement four output channels using 2 dual channel DACs (chip 0 and
 // chip 1).  I am using the channel mapping where channels 0..3 are in
-// sequence 0L 0R 1L 1R.  That is, left is a lower channel than right.  We are
-// using I2S data format, 24 bit.  Our input dac_buffer 32 bit, but we discard
-// the low 8 bits.
+// sequence 0R 0L 1R 1L.  That is, the DAC chips are in channel order, and
+// within a chip, right is a lower channel than left.  We are using I2S data
+// format, 24 bit, so the left channel is set first.
+//
+//Our input dac_buffer 32 bit, but we discard the low 8 bits.
 //
 // The DAC sample rate has to be the same as the ADC (decimated) sample rate,
 // and the DAC board derives its clean system clock (SCK) by a hardware divide
@@ -162,19 +164,19 @@ module multi_dac_interface
 	 if (DAC_LRCK) begin
 	    // LRCK is high, so we are ending a right period (and beginning a
 	    // left, moving to the next sample).  Set up new output data.  We
-	    // are writing both left words, which is channels 0 and 2.
+	    // are writing both left words, which is channels 1 and 3.
 
 	    // The shifters truncate the sample from 32 bits down to 24 and
 	    // include the I2S start pad bit.
-	    dac_shifter[0] <= {1'b0, dac_buffer0};
-	    dac_shifter[1] <= {1'b0, dac_buffer2};
+	    dac_shifter[0] <= {1'b0, dac_buffer1};
+	    dac_shifter[1] <= {1'b0, dac_buffer3};
 	    dac_request <= 0;
 	 end
 	 else begin
 	    // We are in a left period (so are beginning a right).  Load
-	    // shifters with the right-channel data, channels 1 and 3.
-	    dac_shifter[0] <= {1'b0, dac_buffer1};
-	    dac_shifter[1] <= {1'b0, dac_buffer3};
+	    // shifters with the right-channel data, channels 0 and 2.
+	    dac_shifter[0] <= {1'b0, dac_buffer0};
+	    dac_shifter[1] <= {1'b0, dac_buffer2};
 
 	    // Request new output data now that we are done with the buffer so
 	    // it data is ready when we next want it.
