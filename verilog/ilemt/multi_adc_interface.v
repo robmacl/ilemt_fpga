@@ -50,9 +50,9 @@ module multi_adc_interface
    // falling edge of MCLK should occur within 40ns from the start of the
    // conversion, or after the conversion has been completed."  We clear MCLK
    // after the conversion should be done (according to conversion time spec).
-   output reg 		adc_mclk,
+   output reg 		    adc_mclk,
    // SPI SCK for data ouput
-   output reg 		adc_scka,
+   output reg 		    adc_scka,
 
    // SYNC pulse to synchronize the phase of internal digital filter with the
    // output interface.  This is necessary even when there is only one ADC so
@@ -60,9 +60,9 @@ module multi_adc_interface
    // every DF conversions after SYNC. This is basically a reset, but SYNC
    // which is consistent with existing phase does no harm.  An additional
    // function is to enable filter programming via SDI.
-   output reg 		adc_sync,
+   output reg 		    adc_sync,
    // SPI SDI on ADCs, used to configure.
-   output reg 		adc_sdi,
+   output reg 		    adc_sdi,
 
    // SPI SDO for decimated output on each ADC.  The first ADC (IN0_SDOA1) is
    // in bit 0, the MS bit.
@@ -77,7 +77,16 @@ module multi_adc_interface
    // The SPI clock is 1/2 this.  We keep a modest 16 MHz SPI clock rate and
    // use "distributed read", where we clock out only a few bits for every
    // conversion cycle.  See adc_cycles parameter.
-   input 		capture_clk,
+   input 		    capture_clk,
+
+
+   // If true, ADC reading is enabled.  This is another way to hold
+   // the ADC in reset.  This is used to start the ADC when DAC data
+   // appears to guarantee synchronization.
+   input 		    enable,
+
+   // Low bits copied from DAC data, stored in our low output bits.
+   input [7:0] 		    sync_tag,
 
    
    /// Xillybus interface stuff:
@@ -85,24 +94,24 @@ module multi_adc_interface
    // Xillybus clock, which is the 100 MHz FPGA clock.  We use this to
    // synchronize some handshaking signals that go directly to the
    // Xillybus core (rather than through the FIFO).
-   input wire 		bus_clk,
+   input wire 		    bus_clk,
   
    // We are supplying data to the user_r_read_32 FIFO.  These are attached to
    // FIFO write port (capture_clk domain).  Data is transferred from our
    // adc_register() FIFO chain on every cycle when it is available.  When
    // adc_bits is less than 32 then the result is left justified so that the
    // MSB is still in bit 31.
-   output reg [31:0] 	capture_data,
-   output reg 		capture_en,
-   input wire 		capture_full,
+   output reg [31:0] 	    capture_data,
+   output reg 		    capture_en,
+   input wire 		    capture_full,
 
    // user_r_read signals are bus_clk domain.
    // FIFO empty 
-   input wire 		user_r_read_32_empty, 
+   input wire 		    user_r_read_32_empty, 
    // Is the read fifo open?
-   input wire 		user_r_read_32_open,
+   input wire 		    user_r_read_32_open,
    // Asserted to force EOF condition output pipe.  We do not used this.
-   output wire 		user_r_read_32_eof
+   output wire 		    user_r_read_32_eof
   );
 
 `include "adc_params.v"
@@ -125,7 +134,7 @@ module multi_adc_interface
    // Our acquire state machine is held in reset whenever the output file is
    // closed.  This mainly serves to give a clean state on start of
    // acquisition. (FWIW also saves power by keeping the ADC in shutdown.)
-   wire external_reset = ~capture_open;
+   wire external_reset = ~capture_open | ~enable;
 
    // Acquire state machine states. See state machine implementation below. 
    parameter
@@ -273,10 +282,6 @@ module multi_adc_interface
    wire [adc_bits:0] fifo_data [0:acquire_adc_channels];
    assign fifo_data[acquire_adc_channels] = 0;
 
-   // Set up the outputs to the FIFO.  We introduce capture_data and
-   // capture_en as an extra stage of registers to get a clean synchronous
-   // output.
-   parameter [31:0] zero_pad = 0;
    // This is in a generate block to represent our expectation that
    // the adc_bits test on the padding will get constant folded.
    // These days generate is an optional decoration.
@@ -287,7 +292,7 @@ module multi_adc_interface
 	   capture_data <= fifo_data[0][adc_bits-1:0];
 	 else
 	   capture_data <= {fifo_data[0][adc_bits-1:0],
-			   zero_pad[(32 - adc_bits - 1):0]};
+			   sync_tag[7:0]};
 
 	 // Strobe to enable FIFO write.  We drop input data when the FIFO
 	 // is full or the pipe is not open.

@@ -105,10 +105,10 @@ module ilemt (
    output DEBUG6;
    output DEBUG7;
    output DEBUG8;
-   output LED1;
-   output LED2;
-   output LED3;
-   output LED4;
+   output reg LED1;
+   output reg LED2;
+   output reg LED3;
+   output reg LED4;
 
    // Card select for input card configuration
    output IN0_CARDSEL;
@@ -493,8 +493,8 @@ module ilemt (
    // current clock configuration, and also the MMCM/PLL IP configuration
    // wizard.
    // 
-   // Note: if you customize the MCMM IP then you need to copy the generated
-   // file back into the source tree (where this file is located):
+   // Note: if you customize the MCMM clock PLL IP then you need to copy the
+   // generated file back into the source tree (where this file is located):
    //   cp vivado/ilemt.srcs/sources_1/ip/capture_clk1/capture_clk1.xci .
    //
    // Current theory is that capture_clk must be SYSCLK/4 (which is also the
@@ -554,6 +554,11 @@ module ilemt (
    // data is going to the wrong channels.  (I am guessing that alignment
    // problems are very unlikely because we transfer data as blocks.)
    //
+   // ==> For now, we are enabling the ADC only when the DAC has data.
+   //     If there is a DAC underrun, then we stop the ADC.  Likewise
+   //     if the DAC is not open.  This gives synchronization without
+   //     any EOF conditions that might complicate remote TCP access.
+   //
    // Xillybus docs suggest forcing an EOF condition on the affected pipe to
    // tell the software that it needs to reinitialize.
 
@@ -594,21 +599,40 @@ module ilemt (
 	IN3_SDOA2,
 	IN3_SDOA3};
 
+
+   // DAC status flags, used to control ADC also.
+   wire dac_open, dac_underrun;
+
+   // Synchronization tag, low bits of DAC data copied to low bits of
+   // ADC data.
+   wire [7:0] sync_tag;
+
    // Logic for acquiring from the input boards.  Sends data into the Xillybus
    // read 32 fifo, adc_fifo.
    multi_adc_interface the_adc
      (
+      // Pins
       .adc_mclk(ICLK_MCLK_ENA),
       .adc_scka(SCKA),
       .adc_sync(ICLK_SYNC),
       .adc_sdi(ICLK_SDI),
       .adc_sdoa(ADC_SDOA),
+
+      // Clocks
       .capture_clk(capture_clk),
       .bus_clk(bus_clk),
+
+      // For synchronization, only enable ADC when the DAC is running.
+      .enable(dac_open & ~dac_underrun),
+      .sync_tag(sync_tag),
+
+      // read FIFO interface
       .capture_data(capture_data),
       .capture_en(capture_en),
       .capture_full(capture_full),
       .user_r_read_32_empty(user_r_read_32_empty),
+
+      // flags to/from Xillybus about file status
       .user_r_read_32_open(user_r_read_32_open),
       .user_r_read_32_eof(user_r_read_32_eof)
       );
@@ -632,13 +656,14 @@ module ilemt (
 
    // dac_buffer_reg manages the reading from our end of the write FIFO.
    wire [dac_channels*32 - 1 : 0] dac_buffer;
-   wire dac_request, dac_open, dac_underrun;
+   wire dac_request;
    // undriven pin dac_open_bus is constant 0
    dac_buffer_reg the_dac_buffer_reg
      (
       .capture_clk(capture_clk),
       .bus_clk(bus_clk),
       .dac_buffer(dac_buffer),
+      .sync_tag(sync_tag),
       .dac_request(dac_request),
       .dac_underrun(dac_underrun),
       .dac_open(dac_open),
@@ -662,6 +687,30 @@ module ilemt (
        .DAC_LRCK(DAC_LRCK),
        .DAC_NOT_RST(DAC_NOT_RST)
        );
+
+   always @(posedge capture_clk) begin
+      LED1 <= ~dac_open;
+      LED2 <= ~dac_underrun;
+      LED3 <= ~capture_full;
+      LED4 <= ~user_r_read_32_empty;
+   end
+
+   // Interface to the Built In Self Test DAC on the main board.  Data from
+   // dac_buffer_reg can be diverted here rather than going to the normal
+   // output on the DAC board.
+   // bist_dac_interface bist_dac
+   //    (
+   //     .capture_clk(capture_clk),
+   //     .reset(!dac_open),
+   //     .enable(###),
+   //     .dac_buffer(dac_buffer),
+   //     .dac_request(dac_request),
+
+   //     // DAC pins (all output)
+   //     .BIST_SYNC(BIST_SYNC),
+   //     .BIST_MOSI(BIST_MOSI),
+   //     .BIST_SCLK(BIST_SCLK)
+   //     );
 
 
    // Unused Xillybus interface signals

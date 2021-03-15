@@ -88,7 +88,7 @@ parameter adc_channels = 12;
 
 // The number of channels to actually acquire (starting with channel
 // 0).
-parameter acquire_adc_channels = 3;
+parameter acquire_adc_channels = 6;
 
 // Clock periods in ns, used in testbenches.  Round numbers make for a
 // prettier display, don't need to be exactly correct.

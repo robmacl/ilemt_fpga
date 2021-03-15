@@ -30,10 +30,10 @@
 module dac_buffer_reg
   (
    // Data acqusition clock, used to clock this module.
-   input wire 	     capture_clk,
+   input wire 				capture_clk,
 
    // Processor 100 MHz clock, for synchronization with Xillybus.
-   input wire 	     bus_clk,
+   input wire 				bus_clk,
 
    // The four current output samples (one per channel) available to the DACs.
    // All the data is updated in a single capture_clk cycle (on dac_request);
@@ -47,7 +47,7 @@ module dac_buffer_reg
    // internal buffer to dac_buffer.  Don't assert dac_request again during
    // the 4 capture_clk cycles after a preceding dac_request (which is when we
    // are reading the next sample).
-   input wire 	     dac_request,
+   input wire 				dac_request,
    
    // We assert this for one cycle on each sample period where we went to read
    // the FIFO and found it was empty.  If there was an underrun, then
@@ -55,7 +55,7 @@ module dac_buffer_reg
    // read.  Instead, the last valid output is latched.  But we do still
    // attempt to read another sample.  We continue with further read attempts,
    // at the sample rate (as paced by dac_request).
-   output reg 	     dac_underrun,
+   output reg 				dac_underrun,
 
    // True if we are ready for the first daq_request.  The DAC pipe is open
    // and the FIFO has been non-empty at least once.  The DAC drivers should
@@ -67,15 +67,21 @@ module dac_buffer_reg
    // when the first data shows up.  We don't want to start output until there
    // we have some data because that will compromise the synchronization from
    // output to input, and also generate spurious underrun errors.
-   output reg 	     dac_open,
+   output reg 				dac_open,
+
+   // Low bits of channel 0 of the last sample put out, used to test
+   // output/input synchronization.  These bits are not used by either DAC or
+   // ADC.
+   output reg [7:0] 			sync_tag,
+
 
    // Input from Xillybus, true if the DAC pipe is open (bus_clk domain).
-   input wire 	     dac_fifo_open_bus,
+   input wire 				dac_fifo_open_bus,
 
    // FIFO interface
-   output reg 	     dac_rden,
-   input wire [31:0] dac_fifo_data,
-   input wire 	     dac_empty
+   output reg 				dac_rden,
+   input wire [31:0] 			dac_fifo_data,
+   input wire 				dac_empty
    );
 
 `include "adc_params.v"
@@ -110,6 +116,7 @@ module dac_buffer_reg
       // ready on the next cycle.  This is inhibited if there was an underrun.
       if (dac_request && !was_underrun) begin
 	 dac_buffer <= {new_data[0], new_data[1], new_data[2], new_data[3]};
+	 sync_tag <= new_data[0][7:0];
       end
 
       // If we just read the FIFO, then store it into new_data.
